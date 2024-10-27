@@ -1,0 +1,8 @@
+# Ignore Visual Studio files and directories
+.vs/
+
+# Ignore all .sln files
+*.sln
+
+# Ignore the x64 directory
+x64/
