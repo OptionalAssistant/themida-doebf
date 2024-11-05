@@ -6,12 +6,16 @@
 
 class RegisterOperand : public BaseOperand
 {
-private:
-	zasm::Reg m_register;
 public:
 	virtual void LinkOperand()override;
 	virtual void destroy()override;
+	
+	bool isSameRegister( RegisterOperand& register_);
 
-	RegisterOperand(const zasm::Reg& reg) : m_register(reg) {}
+	RegisterOperand(const zasm::Operand& operand,
+		OperandAction op_action) 
+		: BaseOperand(op_action,operand) {}
+
+	
 };
 

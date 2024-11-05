@@ -1673,6 +1673,8 @@ uintptr_t EmulatorCPU::CalcEffectiveMemAddress(const zasm::Operand& op,uintptr_t
 		if (instruction.getMnemonic() == zasm::x86::Mnemonic::Push)
 		{
 			address = CalcMemAddress(op.get<zasm::Mem>());
+
+			if (instruction.getOperandAccess(i) == zasm::detail::OperandAccess::Write)
 			address = address - 8;
 		}
 		else if (instruction.getMnemonic() == zasm::x86::Mnemonic::Pushfq) {
@@ -1913,13 +1915,6 @@ void EmulatorCPU::run(uintptr_t rva)
 			exit(0);
 		}
 		instruction  = res.value();
-		
-		std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} --", eip);
-
-	//	printf("%s", toLog.c_str());
-		logger->log(toLog);
-		
-		LogInstruction(instruction, realone);
 		
 		for (auto& callback : callbacks) {
 			callback.callback_fn(this,eip,instruction,callback.callback_data);

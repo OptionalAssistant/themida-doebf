@@ -7,6 +7,10 @@
 
 #include "../emulator/emu.h"
 #include "Logger.h"
+#include "../Operands/BaseOperand.h"
+#include "../Operands/MemoryOperand.h"
+#include "../Operands/RegisterOperand.h"
+#include "../Operands/ConstantOperand.h"
 
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin)
 {
@@ -49,6 +53,12 @@ std::string formatInstruction(const zasm::InstructionDetail& instruction) {
 		zasm::formatter::Options::HexOffsets);
 }
 
+std::string formatZasmRegisterOperand(const zasm::Reg& op) {
+
+	return  zasm::formatter::toString(op, zasm::formatter::Options::HexImmediates |
+		zasm::formatter::Options::HexOffsets);
+}
+
 void printInstruction(const zasm::InstructionDetail& instruction) {
 	printf("%s\n", formatInstruction(instruction).c_str());
 }
@@ -78,40 +88,174 @@ std::string actionToString(const zasm::detail::OperandAccess& actionType) {
 	}
 }
 
+std::string myActionToString(const OperandAction action) {
+
+	switch (action)
+	{
+	case OperandAction::READ:
+		return "READ";
+	case OperandAction::WRITE:
+		return "WRITE";
+	case OperandAction::READWRITE:
+		return "READWRITE";
+	default:
+		break;
+	}
+}
+
+OperandAction zasmActionToOwn(const zasm::detail::OperandAccess& actionType)
+{
+	switch (actionType)
+	{
+	case zasm::detail::OperandAccess::Read:
+		return OperandAction::READ;
+	case zasm::detail::OperandAccess::Write:
+		return OperandAction::WRITE;
+	case zasm::detail::OperandAccess::ReadWrite:
+		return OperandAction::WRITE;
+	default:
+		throw std::runtime_error("Failed to zasmActionToOwn.Unknown type");
+		break;
+	}
+}
+
 std::string formatBytes(const zasm::InstructionDetail& instruction,uintptr_t address) {
 	std::string pr;
 	for (int i = 0; i < instruction.getLength(); i++)
 	{
-		pr += std::format("0x{:x} ", *(BYTE*)(address + i));
-		//printf("%s", pr.c_str());
+		pr += std::format("{:x} ", *(BYTE*)(address + i));
 	}
 	return pr;
 }
 
-void EmulatorCPU::formatMemoryOperand(const zasm::Operand& op,uintptr_t i) {
+std::string FormatOperandUses(BaseOperand* op) {
+	const auto& useList = op->getUseList();
 
-		uintptr_t address = CalcEffectiveMemAddress(op,i);
+	std::string result = std::format("USES: ");
 
-		std::string action = actionToString(instruction.getOperandAccess(i));
+	if (useList.empty())
+		return result + "NONE ";
 
-		std::string actionType = std::format("{} :   ", action);
-		logger->log(actionType);
+	for (auto& use : useList) {
+		result += std::format("{:d} ", use->getParent()->getCount());
+	}
+	return result;
+}
 
-		std::string memInfo = std::format("[ 0x{:x} ] =  ", address);
-		logger->log(memInfo);
-		//printf("%s", memInfo.c_str());
+std::string formateOperand(BaseOperand* op) {
+	
+	MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
 
-		if (instruction.getMnemonic() != zasm::x86::Mnemonic::Lea)
-		{
-			uintptr_t value;
-			mem_read(address, &value,
-				zasmBitsToNumericSize(instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64)));
-			std::string memContent = std::format("0x{:x}\n",
-				value);
-			logger->log(memContent);
-			//printf("%s", memContent.c_str());
+	if (memoryOperand) {
+
+		const auto& zasmInstruction = memoryOperand->getParent()->getZasmInstruction();
+		std::string action = myActionToString(memoryOperand->getOperandAccess());
+		std::string logMessage = std::format("{} :   [ 0x{:x} ]   ", action, memoryOperand->getMemoryAddress());
+
+		if (memoryOperand->getOperandAccess() == OperandAction::WRITE) {
+			logMessage += FormatOperandUses(op);
+			if (!memoryOperand->getNext())
+				logMessage += "NEXT WRITE: NONE ";
+			else {
+				logMessage += std::format(" NEXT WRITE: {:d} ",
+					memoryOperand->getNext()->getParent()->getCount());
+			}
+
+			if (!memoryOperand->getPrev())
+				logMessage += "PREV WRITE: NONE ";
+			else {
+				logMessage += std::format(" PREV WRITE: {:d} ",
+					memoryOperand->getPrev()->getParent()->getCount());
+			}
 
 		}
+		else if (memoryOperand->getOperandAccess() == OperandAction::READ) {
+			if (!memoryOperand->getPrev())
+				return logMessage += "ORIGIN: NONE ";
+			else {
+				logMessage += std::format("ORIGIN : {:d} ",
+					memoryOperand->getPrev()->getParent()->getCount());
+			}
+		}
+		return logMessage;
+	}
+
+	RegisterOperand* registerOpernad = dynamic_cast<RegisterOperand*>(op);
+
+	if (registerOpernad) {
+		std::string logMessage = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
+		logMessage += std::format("  {} :", myActionToString(registerOpernad->getOperandAccess()));
+
+		if (registerOpernad->getOperandAccess() == OperandAction::WRITE) {
+			logMessage += FormatOperandUses(op);
+			if (!registerOpernad->getNext())
+				logMessage += "NEXT WRITE: NONE ";
+			else {
+				logMessage += std::format(" NEXT WRITE: {:d} ",
+					registerOpernad->getNext()->getParent()->getCount());
+			}
+
+			if (!registerOpernad->getPrev())
+				logMessage += "PREV WRITE: NONE ";
+			else {
+				logMessage += std::format(" PREV WRITE: {:d} ",
+					registerOpernad->getPrev()->getParent()->getCount());
+			}
+		}
+		 else if (registerOpernad->getOperandAccess() == OperandAction::READ) {
+			if (!registerOpernad->getPrev())
+				 logMessage +=  "ORIGIN: NONE ";
+			else {
+				logMessage += std::format("ORIGIN : {:d} ",
+					registerOpernad->getPrev()->getParent()->getCount());
+			}
+		}
+		return logMessage;
+	}
+
+	ConstantOperand* constantOperand = dynamic_cast<ConstantOperand*>(op);
+
+	if (constantOperand) {
+		std::string logMessage = std::format("CONST ");
+		return logMessage;
+	}
+}
+
+void formateLinkedInstructions(Instruction* instruction)
+{
+	for (Instruction* currentInstruction = instruction;
+		currentInstruction != nullptr; currentInstruction = currentInstruction->getNext()) {
+
+		std::string res =std::format("{:d} | ",currentInstruction->getCount())
+			+ formatInstruction(currentInstruction->getZasmInstruction()) + "\n";
+		
+		const auto& Operands = currentInstruction->getOperands();
+
+		for (int i = 0; i < Operands.size(); i++) {
+			res += std::format("OP:{:d} ",i) + formateOperand(Operands[i]) + "\n";
+
+		}
+		printf("%s\n\n", res.c_str());
+		logger->log(res + "\n");
+	}
+
+}
+
+std::string EmulatorCPU::formatMemoryOperand(const zasm::Operand& op,uintptr_t i) {
+
+	uintptr_t address = CalcEffectiveMemAddress(op, i);
+
+	std::string action = actionToString(instruction.getOperandAccess(i));
+	std::string logMessage = std::format("{} :   [ 0x{:x} ] =  ", action, address);
+
+	if (instruction.getMnemonic() != zasm::x86::Mnemonic::Lea) {
+		uintptr_t value;
+		mem_read(address, &value,
+			zasmBitsToNumericSize(instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64)));
+		logMessage += std::format("0x{:x}\n", value);
+	}
+
+	return logMessage;
 }
 void EmulatorCPU::LogInstruction(const zasm::InstructionDetail& instruction, uintptr_t address)
 {
@@ -124,7 +268,6 @@ void EmulatorCPU::LogInstruction(const zasm::InstructionDetail& instruction, uin
 		
 	std::string string = std::format("|  {}\n",formatInstruction(instruction).c_str());
 	logger->log(string);
-//	printf("%s", string.c_str());
 
 	for (int i = 0; i < instruction.getOperandCount(); i++)
 	{
@@ -132,7 +275,7 @@ void EmulatorCPU::LogInstruction(const zasm::InstructionDetail& instruction, uin
 
 		if (op.holds<zasm::Mem>())
 		{
-			formatMemoryOperand(op,i);
+			logger->log(formatMemoryOperand(op,i));
 		}
 	}
 	

@@ -15,7 +15,6 @@ private:
 	ConstantOperand* scale;
 
 	uintptr_t memoryAddress;
-	zasm::BitSize bsOp;
 public:
 	RegisterOperand* getBase();
 	RegisterOperand* getIndex();
@@ -27,9 +26,17 @@ public:
 	void setDisplacement(ConstantOperand* op);
 	void setScale(ConstantOperand* op);
 	void setMemoryAddress(uintptr_t memAddress);
-	void setBsOp(const zasm::BitSize& bs);
+	uintptr_t getMemoryAddress();
 
 	virtual void LinkOperand()override;
 	virtual void destroy()override;
+
+	MemoryOperand(RegisterOperand* base, RegisterOperand* index,
+		ConstantOperand* displacement, ConstantOperand* scale,
+		OperandAction op_action,const zasm::Operand& operand)
+		: base(base), index(index),scale(scale), displacement(displacement),
+		BaseOperand(op_action,operand) {}
+
+	MemoryOperand() = default;
 };
 

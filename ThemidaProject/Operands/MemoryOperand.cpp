@@ -42,13 +42,52 @@ void MemoryOperand::setMemoryAddress(uintptr_t memAddress){
     this->memoryAddress = memAddress;
 }
 
-void MemoryOperand::setBsOp(const zasm::BitSize& bs)
+uintptr_t MemoryOperand::getMemoryAddress()
 {
-    this->bsOp = bs;
+    return memoryAddress;
 }
 
 void MemoryOperand::LinkOperand()
 {
+    base->LinkOperand();
+    index->LinkOperand();
+
+    Instruction* previous = this->getParent()->getPrev();
+
+    if (!previous)
+        return;
+
+    do {
+
+        for (auto& op : previous->getOperands()) {
+            
+            MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
+
+            if (memoryOperand) {
+                uintptr_t memoryAddress = memoryOperand->getMemoryAddress();
+
+                if (memoryAddress == this->getMemoryAddress()) {
+
+                    if (op->getOperandAccess() == OperandAction::WRITE) {
+
+                        this->setPrev(op);
+
+                        if (this->getOperandAccess() == OperandAction::READ) {
+                            op->addUse(this);
+                        }
+                        else if (this->getOperandAccess() == OperandAction::WRITE) {
+                            op->setNext(this);
+                        }
+                        return;
+
+                    }
+                }
+            }
+        }
+     
+       previous = previous->getPrev();
+    
+    } while (previous != nullptr);
 }
 
 void MemoryOperand::destroy()
@@ -57,4 +96,6 @@ void MemoryOperand::destroy()
     index->destroy();
     displacement->destroy();
     scale->destroy();
+    deleteAllUses();
+    delete this;
 }

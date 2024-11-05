@@ -133,7 +133,7 @@ private:
 	BYTE GetSignFlag();
 	BYTE GetOverflowFlag();
 
-	uintptr_t from_virtual_to_real(uintptr_t rva);
+	
 	bool CF;
 	bool PF;
 	bool AF;
@@ -153,11 +153,9 @@ private:
 
 	void PrintFlags();
 
-	uintptr_t CalcMemAddress(const zasm::Mem& mem);
-	uintptr_t CalcEffectiveMemAddress(const zasm::Operand& op, uintptr_t i);
 
-	void formatMemoryOperand(const zasm::Operand& op, uintptr_t i);
-	void LogInstruction(const zasm::InstructionDetail& instruction, uintptr_t address);
+
+	std::string formatMemoryOperand(const zasm::Operand& op, uintptr_t i);
 	void update_eflags(uintptr_t dst,uintptr_t dst_old, uintptr_t src1, uintptr_t src2,
 		zasm::BitSize bs, BinaryOp op);
 	void PrintRegisters();
@@ -187,7 +185,7 @@ public:
 	void run(uintptr_t eip);
 
 	EmulatorCPU();
-
+	void LogInstruction(const zasm::InstructionDetail& instruction, uintptr_t address);
 	void reg_write( zasm::Reg reg,uintptr_t value);
 
 	uintptr_t reg_read( zasm::Reg reg);
@@ -198,9 +196,12 @@ public:
 
 	void stop_emu();
 
+	uintptr_t CalcMemAddress(const zasm::Mem& mem);
+	uintptr_t CalcEffectiveMemAddress(const zasm::Operand& op, uintptr_t i);
+
 	bool mem_map(uintptr_t address, uintptr_t size);
 	bool mem_unmap(uintptr_t address);
-
+	uintptr_t from_virtual_to_real(uintptr_t rva);
 	uintptr_t mem_read(uintptr_t address, void* bytes, uintptr_t size);
 	void mem_write(uintptr_t address, const void* bytes, uintptr_t  size);
 

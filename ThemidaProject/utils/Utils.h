@@ -6,7 +6,8 @@
 
 #include <zasm/zasm.hpp>
 
-
+class Instruction;
+enum class OperandAction;
 
 #define LOGGING 1;
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin);
@@ -27,3 +28,10 @@ uintptr_t zasmBitsToNumericSize(zasm::BitSize bs);
 std::string formatInstruction(const zasm::InstructionDetail& instruction);
 void printInstruction(const zasm::InstructionDetail& instruction);
 std::string actionToString(const zasm::detail::OperandAccess& actionType);
+
+
+OperandAction zasmActionToOwn(const zasm::detail::OperandAccess& actionType);
+std::string formatBytes(const zasm::InstructionDetail& instruction, uintptr_t address);
+
+
+void formateLinkedInstructions(Instruction* instruction);

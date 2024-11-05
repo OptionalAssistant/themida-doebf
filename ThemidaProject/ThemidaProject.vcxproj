@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Optimizations\DeadCodeElimination.cpp" />
+    <ClCompile Include="Optimizations\BaseOptimization.cpp" />
     <ClCompile Include="Devirt\deobf.cpp" />
     <ClCompile Include="Linker\Linker.cpp" />
     <ClCompile Include="Operands\BaseOperand.cpp" />
@@ -146,6 +148,7 @@
     <ClCompile Include="emulator\emu.cpp" />
     <ClCompile Include="Instruction\Instruction.cpp" />
     <ClCompile Include="Operands\MemoryOperand.cpp" />
+    <ClCompile Include="Optimizations\Optimizer.cpp" />
     <ClCompile Include="PE\PE.cpp" />
     <ClCompile Include="Operands\RegisterOperand.cpp" />
     <ClCompile Include="ThemidaProject.cpp" />
@@ -153,6 +156,8 @@
     <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Optimizations\DeadCodeElimination.h" />
+    <ClInclude Include="Optimizations\BaseOptimization.h" />
     <ClInclude Include="Devirt\deobf.h" />
     <ClInclude Include="Linker\Linker.h" />
     <ClInclude Include="Operands\BaseOperand.h" />
@@ -160,6 +165,7 @@
     <ClInclude Include="emulator\emu.h" />
     <ClInclude Include="Instruction\Instruction.h" />
     <ClInclude Include="Operands\MemoryOperand.h" />
+    <ClInclude Include="Optimizations\Optimizer.h" />
     <ClInclude Include="PE\PE.h" />
     <ClInclude Include="Operands\RegisterOperand.h" />
     <ClInclude Include="utils\Logger.h" />

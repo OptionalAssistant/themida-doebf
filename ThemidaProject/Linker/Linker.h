@@ -19,3 +19,4 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
     void* user_data);
 
 Instruction* zasmToInstruction(const zasm::InstructionDetail& instruction);
+

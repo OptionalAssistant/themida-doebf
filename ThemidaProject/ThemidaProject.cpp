@@ -8,6 +8,7 @@
 #include "Utils/Logger.h"
 #include "./Linker/Linker.h"
 #include "./Devirt/deobf.h"
+#include "./Optimizations/Optimizer.h"
 
 int main()
 {
