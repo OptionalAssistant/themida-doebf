@@ -20,13 +20,16 @@ void RegisterOperand::LinkOperand()
 					
 				   const OperandAction opAccess = op->getOperandAccess();
 
-				   if (opAccess == OperandAction::WRITE) {
+				   if (opAccess == OperandAction::WRITE ||
+					   opAccess == OperandAction::READWRITE) {
 					   this->setPrev(op);
 					   
-					   if (this->getOperandAccess() == OperandAction::WRITE) {
+					   if (this->getOperandAccess() == OperandAction::WRITE ||
+						   this->getOperandAccess() == OperandAction::READWRITE) {
 						   op->setNext(this);
 					   }
-					   else if (this->getOperandAccess() == OperandAction::READ) {
+					    if (this->getOperandAccess() == OperandAction::READ ||
+						   this->getOperandAccess() == OperandAction::READWRITE) {
 						   op->addUse(this);
 					   }
 
@@ -45,8 +48,7 @@ void RegisterOperand::LinkOperand()
 
 void RegisterOperand::destroy()
 {
-	deleteAllUses();
-	delete this;
+	BaseDestroy();
 }
 
 bool RegisterOperand::isSameRegister( RegisterOperand& register_)

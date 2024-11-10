@@ -1,9 +1,9 @@
 #include "Optimizer.h"
-#include "DeadCodeElimination.h"
+#include "SimplifyStackOperation.h"
 
 Optimizer::Optimizer()
 {
-	passes.push_back(new DeadCodeElimination());
+	passes.push_back(new SimplifyStackOperation());
 }
 
 bool Optimizer::run(Instruction* instruction)

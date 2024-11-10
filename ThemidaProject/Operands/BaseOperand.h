@@ -18,6 +18,7 @@ private:
 	std::vector<BaseOperand*>use_list;
 	BaseOperand* next;
 	BaseOperand* prev;
+
 	OperandAction op_action;
 	zasm::Operand operand;
 public:
@@ -34,6 +35,9 @@ public:
 	void setPrev(BaseOperand* opPrev);
 	void setNext(BaseOperand* opNext);
 	void addUse(BaseOperand* useOperand);
+	void BaseDestroy();
+	void DeleteAllUses();
+	void ClearUseList();
 
 	OperandAction getOperandAccess();
 	void setOperandAction(OperandAction action);

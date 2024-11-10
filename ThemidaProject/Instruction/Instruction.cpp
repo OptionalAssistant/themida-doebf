@@ -1,5 +1,6 @@
 #include "Instruction.h"
 #include "../Operands/BaseOperand.h"
+#include "../utils/Utils.h"
 
 std::vector<BaseOperand*>& Instruction::getOperands() 
 {
@@ -22,24 +23,15 @@ void Instruction::DeleteFromList()
 {
 	this->getNext()->setPrev(prev);
 	this->getPrev()->setNext(next);
-	DecreaseCount();
 }
 
 void Instruction::Delete()
 {
-	Unlink();
 	DeleteFromList();
+	Unlink();
 	delete this;
 }
 
-void Instruction::DecreaseCount()
-{
-	for (Instruction* currentInstruction = this;
-		currentInstruction != nullptr;
-		currentInstruction = currentInstruction->getNext()) {
-		currentInstruction->setCount(currentInstruction->getCount() - 1);
-	}
-}
 
 Instruction* Instruction::getNext() const
 {
@@ -78,27 +70,34 @@ void Instruction::setNext( Instruction* instruction)
 	next = instruction;
 }
 
-Instruction* Instruction::insertAfter(Instruction* instruction)
+Instruction* Instruction::insertAfter(Instruction* previous)
 {
-	next = instruction;
-	instruction->setPrev(this);
+	printf("Insert after instructions: %s\n", formatInstruction(previous->getZasmInstruction()).c_str());
+	this->setPrev(previous);
 
-	instruction->setCount(this->getCount() + 1);
+	this->setNext(previous->getNext());
 
-	return instruction;
+	if(previous->getNext())
+	previous->getNext()->setPrev(this);
+
+
+	previous->setNext(this);
+
+
+	this->setCount(previous->getCount() + 1);
+
+	return this;
 }
 
-Instruction* Instruction::insertBefore( Instruction* instruction)
+Instruction* Instruction::insertBefore( Instruction* next)
 {
-	instruction->setNext(this);
-	
-	instruction->setPrev(this->getPrev());
-	
-	this->setPrev(instruction);
+	this->setPrev(next->getPrev());
+	this->setNext(next);
+	next->setPrev(this);
 
-	instruction->setCount(this->getCount() - 1);
+	setCount(next->getCount());
 
-	return instruction;
+	return this;
 }
 
 void Instruction::addOperand(BaseOperand* baseOperand){

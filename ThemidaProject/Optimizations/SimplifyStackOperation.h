@@ -3,7 +3,7 @@
 
 class Instruction;
 
-class DeadCodeElimination : public BaseOptimization  
+class SimplifyStackOperation : public BaseOptimization  
 {
 	virtual bool run(Instruction* instruction)override;
 };

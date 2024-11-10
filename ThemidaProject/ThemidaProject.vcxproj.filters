@@ -57,7 +57,7 @@
     <ClCompile Include="Optimizations\BaseOptimization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\DeadCodeElimination.cpp">
+    <ClCompile Include="Optimizations\SimplifyStackOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,7 +101,7 @@
     <ClInclude Include="Optimizations\BaseOptimization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\DeadCodeElimination.h">
+    <ClInclude Include="Optimizations\SimplifyStackOperation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

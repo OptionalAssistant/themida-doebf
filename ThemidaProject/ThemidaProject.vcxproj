@@ -139,7 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Optimizations\DeadCodeElimination.cpp" />
+    <ClCompile Include="Optimizations\SimplifyStackOperation.cpp" />
     <ClCompile Include="Optimizations\BaseOptimization.cpp" />
     <ClCompile Include="Devirt\deobf.cpp" />
     <ClCompile Include="Linker\Linker.cpp" />
@@ -156,7 +156,7 @@
     <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Optimizations\DeadCodeElimination.h" />
+    <ClInclude Include="Optimizations\SimplifyStackOperation.h" />
     <ClInclude Include="Optimizations\BaseOptimization.h" />
     <ClInclude Include="Devirt\deobf.h" />
     <ClInclude Include="Linker\Linker.h" />

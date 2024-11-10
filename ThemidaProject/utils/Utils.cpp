@@ -112,9 +112,9 @@ OperandAction zasmActionToOwn(const zasm::detail::OperandAccess& actionType)
 	case zasm::detail::OperandAccess::Write:
 		return OperandAction::WRITE;
 	case zasm::detail::OperandAccess::ReadWrite:
-		return OperandAction::WRITE;
+		return OperandAction::READWRITE;
 	default:
-		throw std::runtime_error("Failed to zasmActionToOwn.Unknown type");
+ 		throw std::runtime_error("Failed to zasmActionToOwn.Unknown type");
 		break;
 	}
 }
@@ -142,104 +142,117 @@ std::string FormatOperandUses(BaseOperand* op) {
 	return result;
 }
 
+std::string formatRelations(BaseOperand* op) {
+
+	std::string logMessage;
+	if (op->getOperandAccess() == OperandAction::WRITE ||
+		op->getOperandAccess() == OperandAction::READWRITE) {
+		logMessage += FormatOperandUses(op);
+		if (!op->getNext())
+			logMessage += "NEXT WRITE: NONE ";
+		else {
+			logMessage += std::format(" NEXT WRITE: {:d} ",
+			op->getNext()->getParent()->getCount());
+			
+		}
+
+		if (!op->getPrev())
+			logMessage += "PREV WRITE: NONE ";
+		else {
+			logMessage += std::format(" PREV WRITE: {:d} ",
+				op->getPrev()->getParent()->getCount());
+		}
+	}
+	else if (op->getOperandAccess() == OperandAction::READ ||
+		op->getOperandAccess() == OperandAction::READWRITE) {
+		if (!op->getPrev())
+			logMessage += "ORIGIN: NONE ";
+		else {
+			logMessage += std::format("ORIGIN : {:d} ",
+				op->getPrev()->getParent()->getCount());
+		}
+	}
+	return logMessage;
+}
+std::string formatRegisterOperand(RegisterOperand* registerOpernad) {
+	std::string logMessage  = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
+	logMessage += std::format("  {} :", myActionToString(registerOpernad->getOperandAccess()));
+
+	logMessage += formatRelations(registerOpernad) + "\n";
+
+	return logMessage;
+}
+
+std::string formatMemoryOp(MemoryOperand* memoryOp) {
+
+	std::string logMessage;
+	const auto& zasmInstruction = memoryOp->getParent()->getZasmInstruction();
+	std::string action = myActionToString(memoryOp->getOperandAccess());
+	logMessage = std::format("{} :   [ 0x{:x} ]   ", action, memoryOp->getMemoryAddress());
+
+	logMessage += formatRelations(memoryOp) + "\n";
+
+	 logMessage += "BASE " + formatRegisterOperand(memoryOp->getBase())
+		+ "INDEX " + formatRegisterOperand(memoryOp->getIndex());
+
+	 
+
+	 return logMessage;
+}
+
 std::string formateOperand(BaseOperand* op) {
 	
 	MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
 
-	if (memoryOperand) {
 
-		const auto& zasmInstruction = memoryOperand->getParent()->getZasmInstruction();
-		std::string action = myActionToString(memoryOperand->getOperandAccess());
-		std::string logMessage = std::format("{} :   [ 0x{:x} ]   ", action, memoryOperand->getMemoryAddress());
-
-		if (memoryOperand->getOperandAccess() == OperandAction::WRITE) {
-			logMessage += FormatOperandUses(op);
-			if (!memoryOperand->getNext())
-				logMessage += "NEXT WRITE: NONE ";
-			else {
-				logMessage += std::format(" NEXT WRITE: {:d} ",
-					memoryOperand->getNext()->getParent()->getCount());
-			}
-
-			if (!memoryOperand->getPrev())
-				logMessage += "PREV WRITE: NONE ";
-			else {
-				logMessage += std::format(" PREV WRITE: {:d} ",
-					memoryOperand->getPrev()->getParent()->getCount());
-			}
-
-		}
-		else if (memoryOperand->getOperandAccess() == OperandAction::READ) {
-			if (!memoryOperand->getPrev())
-				return logMessage += "ORIGIN: NONE ";
-			else {
-				logMessage += std::format("ORIGIN : {:d} ",
-					memoryOperand->getPrev()->getParent()->getCount());
-			}
-		}
+	ConstantOperand* constantOperand = dynamic_cast<ConstantOperand*>(op);
+	std::string logMessage;
+	if (constantOperand) {
+		 logMessage = std::format("CONST ");
 		return logMessage;
+	}
+
+	if (memoryOperand) {
+		return formatMemoryOp(memoryOperand);
 	}
 
 	RegisterOperand* registerOpernad = dynamic_cast<RegisterOperand*>(op);
 
 	if (registerOpernad) {
-		std::string logMessage = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
-		logMessage += std::format("  {} :", myActionToString(registerOpernad->getOperandAccess()));
-
-		if (registerOpernad->getOperandAccess() == OperandAction::WRITE) {
-			logMessage += FormatOperandUses(op);
-			if (!registerOpernad->getNext())
-				logMessage += "NEXT WRITE: NONE ";
-			else {
-				logMessage += std::format(" NEXT WRITE: {:d} ",
-					registerOpernad->getNext()->getParent()->getCount());
-			}
-
-			if (!registerOpernad->getPrev())
-				logMessage += "PREV WRITE: NONE ";
-			else {
-				logMessage += std::format(" PREV WRITE: {:d} ",
-					registerOpernad->getPrev()->getParent()->getCount());
-			}
-		}
-		 else if (registerOpernad->getOperandAccess() == OperandAction::READ) {
-			if (!registerOpernad->getPrev())
-				 logMessage +=  "ORIGIN: NONE ";
-			else {
-				logMessage += std::format("ORIGIN : {:d} ",
-					registerOpernad->getPrev()->getParent()->getCount());
-			}
-		}
-		return logMessage;
+		return formatRegisterOperand(registerOpernad);
 	}
-
-	ConstantOperand* constantOperand = dynamic_cast<ConstantOperand*>(op);
-
-	if (constantOperand) {
-		std::string logMessage = std::format("CONST ");
-		return logMessage;
-	}
+	
 }
+std::string formateLinkOneInstruction(Instruction* instruction) {
+	std::string res = std::format("{:d} | ", instruction->getCount())
+		+ formatInstruction(instruction->getZasmInstruction()) + "\n";
 
+
+	const auto& Operands = instruction->getOperands();
+
+	for (int i = 0; i < Operands.size(); i++) {
+		res += std::format("OP:{:d} ", i) + formateOperand(Operands[i]) + "\n";
+
+	}
+
+	return res;
+}
 void formateLinkedInstructions(Instruction* instruction)
 {
 	for (Instruction* currentInstruction = instruction;
 		currentInstruction != nullptr; currentInstruction = currentInstruction->getNext()) {
 
-		std::string res =std::format("{:d} | ",currentInstruction->getCount())
-			+ formatInstruction(currentInstruction->getZasmInstruction()) + "\n";
-		
-		const auto& Operands = currentInstruction->getOperands();
+		if (currentInstruction->getCount() == 294)
+			printf("");
 
-		for (int i = 0; i < Operands.size(); i++) {
-			res += std::format("OP:{:d} ",i) + formateOperand(Operands[i]) + "\n";
+		std::string res = formateLinkOneInstruction(currentInstruction);
 
-		}
 		printf("%s\n\n", res.c_str());
 		logger->log(res + "\n");
 	}
 
 }
+
 
 std::string EmulatorCPU::formatMemoryOperand(const zasm::Operand& op,uintptr_t i) {
 

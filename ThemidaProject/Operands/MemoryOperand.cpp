@@ -68,14 +68,17 @@ void MemoryOperand::LinkOperand()
 
                 if (memoryAddress == this->getMemoryAddress()) {
 
-                    if (op->getOperandAccess() == OperandAction::WRITE) {
+                    if (op->getOperandAccess() == OperandAction::WRITE ||
+                        op->getOperandAccess() == OperandAction::READWRITE) {
 
                         this->setPrev(op);
 
-                        if (this->getOperandAccess() == OperandAction::READ) {
+                        if (this->getOperandAccess() == OperandAction::READ ||
+                            this->getOperandAccess() == OperandAction::READWRITE) {
                             op->addUse(this);
                         }
-                        else if (this->getOperandAccess() == OperandAction::WRITE) {
+                         if (this->getOperandAccess() == OperandAction::WRITE ||
+                            this->getOperandAccess() == OperandAction::READWRITE) {
                             op->setNext(this);
                         }
                         return;
@@ -96,6 +99,5 @@ void MemoryOperand::destroy()
     index->destroy();
     displacement->destroy();
     scale->destroy();
-    deleteAllUses();
-    delete this;
+    BaseDestroy();
 }

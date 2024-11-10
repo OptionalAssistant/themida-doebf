@@ -19,7 +19,6 @@ public:
 	void Unlink();
 	void DeleteFromList();
 	void Delete();
-	void DecreaseCount();
 
 	Instruction* getNext()const;
 	Instruction* getPrev()const;

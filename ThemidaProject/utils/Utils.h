@@ -35,3 +35,8 @@ std::string formatBytes(const zasm::InstructionDetail& instruction, uintptr_t ad
 
 
 void formateLinkedInstructions(Instruction* instruction);
+
+
+void resetCounter(Instruction* head);
+
+std::string formateLinkOneInstruction(Instruction* instruction);

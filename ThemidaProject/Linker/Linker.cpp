@@ -53,7 +53,7 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
         data->head = data->tail = data->instructions = instruction;
     }
     else {
-        data->tail->insertAfter(instruction);
+        instruction->insertAfter(data->tail);
         data->tail = instruction;
     }
 
