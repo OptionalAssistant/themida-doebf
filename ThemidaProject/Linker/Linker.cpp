@@ -69,19 +69,19 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
 
 }
 
-ConstantOperand* createConstantOperand(const zasm::Imm& immOp) {
-    return new ConstantOperand(immOp);
+ConstantOperand* createConstantOperand(const zasm::Imm& immOp,uintptr_t index) {
+    return new ConstantOperand(immOp,index);
 }
 
-RegisterOperand* createRegisterOperand(const zasm::Reg& regOperand,OperandAction op_action) {
-    return new RegisterOperand(regOperand,op_action);
+RegisterOperand* createRegisterOperand(const zasm::Reg& regOperand,OperandAction op_action,uintptr_t index) {
+    return new RegisterOperand(regOperand, index,op_action);
 }
 
-MemoryOperand* createMemoryOperand(const zasm::Mem& memoryOp,OperandAction op_action) {
-    return new MemoryOperand(createRegisterOperand(memoryOp.getBase(),OperandAction::READ),
-        createRegisterOperand(memoryOp.getIndex(),OperandAction::READ),
-        createConstantOperand(memoryOp.getDisplacement()),
-        createConstantOperand(memoryOp.getScale()),op_action,memoryOp);
+MemoryOperand* createMemoryOperand(const zasm::Mem& memoryOp,OperandAction op_action,uintptr_t index) {
+    return new MemoryOperand(createRegisterOperand(memoryOp.getBase(),OperandAction::READ, index),
+        createRegisterOperand(memoryOp.getIndex(),OperandAction::READ, index),
+        createConstantOperand(memoryOp.getDisplacement(), index),
+        createConstantOperand(memoryOp.getScale(), index),op_action,memoryOp,index);
 }
 
 Instruction* zasmToInstruction(const zasm::InstructionDetail& instruction_)
@@ -91,17 +91,17 @@ Instruction* zasmToInstruction(const zasm::InstructionDetail& instruction_)
     for (int i = 0; i < instruction_.getOperandCount();i++) {
         if (instruction_.getOperand(i).holds<zasm::Mem>()) {
             MemoryOperand* memoryOperand = createMemoryOperand(instruction_.getOperand(i).get<zasm::Mem>(),
-                zasmActionToOwn(instruction_.getOperandAccess(i)));
+                zasmActionToOwn(instruction_.getOperandAccess(i)),i);
             instruction->addOperand(memoryOperand);
             memoryOperand->getBase()->setParent(instruction);
             memoryOperand->getIndex()->setParent(instruction);
         }
         else if (instruction_.getOperand(i).holds<zasm::Reg>()) {
             instruction->addOperand(createRegisterOperand(instruction_.getOperand(i).get<zasm::Reg>(),
-                zasmActionToOwn(instruction_.getOperandAccess(i))));
+                zasmActionToOwn(instruction_.getOperandAccess(i)),i));
         }
         else if (instruction_.getOperand(i).holds<zasm::Imm>()) {
-            instruction->addOperand(createConstantOperand(instruction_.getOperand(i).get<zasm::Imm>()));
+            instruction->addOperand(createConstantOperand(instruction_.getOperand(i).get<zasm::Imm>(),i));
         }
     }
 

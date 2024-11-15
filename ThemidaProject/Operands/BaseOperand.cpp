@@ -1,6 +1,9 @@
 #include <algorithm>
+#include <stdexcept>
+
 
 #include "BaseOperand.h"
+#include "ConstantOperand.h"
 
 Instruction* BaseOperand::getParent() const
 {
@@ -45,45 +48,108 @@ void BaseOperand::addUse(BaseOperand* useOperand)
     use_list.push_back(useOperand);
 }
 
-void BaseOperand::BaseDestroy()
-{
-    BaseOperand* previous = this->getPrev();
-
-    
-    if (previous && (this->getOperandAccess() == OperandAction::READ ||
-        this->getOperandAccess() == OperandAction::READWRITE)) {
-        auto& previousUseList = previous->getUseList();
-
-        auto foundUse = std::find(previousUseList.begin(), previousUseList.end(), this);
-
-        if (foundUse != previousUseList.end())
-            previousUseList.erase(foundUse);
-        else
-            printf("Error");
-     
-    }
-    /*if (this->getOperandAccess() == OperandAction::WRITE ||
-        this->getOperandAccess() == OperandAction::READWRITE)
-    {
-         if(previous)
-        previous->setNext(this->getNext());
-
-        this->ClearUseList();
-
-        if(this->getNext())
-        this->getNext()->setPrev(previous);
-
-    }*/
-    delete this;
-}
-
-void BaseOperand::DeleteAllUses()
-{
-}
-
 void BaseOperand::ClearUseList()
 {
     use_list.clear();
+}
+
+void BaseOperand::replaceOneUse(BaseOperand* oldUse, BaseOperand* newUse)
+{
+    this->deleteUse(oldUse);
+
+    this->addUse(newUse);
+}
+
+void BaseOperand::replaceOperandWith(BaseOperand* op){
+    this->replaceAllUses(op);
+
+
+    this->setPrev(op->getPrev());
+    this->setNext(op->getNext());
+
+    if (op->getPrev())
+        op->getPrev()->setNext(this);
+
+    if (op->getNext())
+        op->getNext()->setPrev(this);
+
+}
+
+void BaseOperand::deleteUse(BaseOperand* operand){
+    auto& useList = this->getUseList();
+
+    if (useList.empty())
+        return;
+
+    auto it = std::find(useList.begin(), useList.end(), operand);
+
+    if (it == useList.end())
+        throw std::runtime_error("Error during replaceOneUse");
+
+    useList.erase(it);
+}
+
+void BaseOperand::transferAllUses(BaseOperand* operand)
+{
+    auto& useList = this->getUseList();
+
+    for (auto& use : useList) {
+        if(operand)
+        operand->addUse(use);
+
+        use->setPrev(operand);
+    }
+
+    useList.clear();
+}
+
+void BaseOperand::makeConstant(ConstantOperand* constantOp){
+
+    Instruction* parent = this->getParent();
+    
+    parent->replaceOperand(this, constantOp);
+    
+}
+
+void BaseOperand::emplaceBetween()
+{
+    if (this->getNext())
+        this->getNext()->setPrev(this->getPrev());
+
+    if (this->getPrev())
+        this->getPrev()->setNext(this->getNext());
+
+}
+
+bool BaseOperand::hasOneUse()
+{
+    return use_list.size() == 1;
+}
+
+bool BaseOperand::hasOneUser()
+{
+    if (hasOneUse())
+        return true;
+
+    Instruction* firstUser = use_list[0]->getParent();
+    for (auto& use : use_list) {
+        Instruction* user = use->getParent();
+
+        if (user != firstUser)
+            return false;
+    }
+
+    return true;
+}
+
+uintptr_t BaseOperand::getIndex()
+{
+    return index;
+}
+
+void BaseOperand::setIndex(uintptr_t index)
+{
+    this->index = index;
 }
 
 OperandAction BaseOperand::getOperandAccess()
@@ -112,17 +178,4 @@ void BaseOperand::replaceAllUses(BaseOperand* operand)
     operand->ClearUseList();
 }
 
-void BaseOperand::replaceNextPrev(BaseOperand* operand)
-{
-    next = operand->getNext();
-    prev = operand->getPrev();
-}
 
-void BaseOperand::deleteAllUses()
-{
-    for (auto& use : use_list) {
-        use->setPrev(nullptr);
-    }
-
-    use_list.clear();
-}

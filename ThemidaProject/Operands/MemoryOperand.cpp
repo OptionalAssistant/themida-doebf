@@ -99,5 +99,5 @@ void MemoryOperand::destroy()
     index->destroy();
     displacement->destroy();
     scale->destroy();
-    BaseDestroy();
+    delete this;
 }

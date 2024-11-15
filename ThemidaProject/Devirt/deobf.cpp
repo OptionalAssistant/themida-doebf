@@ -8,6 +8,7 @@
 #include "../Linker/Linker.h"
 #include "../utils/Utils.h"
 #include "../Instruction/Instruction.h"
+#include "../utils/Logger.h"
 
 
 void deobf::run(uintptr_t rva)
@@ -30,5 +31,9 @@ void deobf::run(uintptr_t rva)
 	  isContinue = optimizer->run(userData.head);
 
 	} while (isContinue);
+
+	logger->log("After\n");
+
+	formateLinkedInstructions(userData.head);
 
 }

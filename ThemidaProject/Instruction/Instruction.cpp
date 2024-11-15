@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "Instruction.h"
 #include "../Operands/BaseOperand.h"
 #include "../utils/Utils.h"
@@ -72,7 +74,7 @@ void Instruction::setNext( Instruction* instruction)
 
 Instruction* Instruction::insertAfter(Instruction* previous)
 {
-	printf("Insert after instructions: %s\n", formatInstruction(previous->getZasmInstruction()).c_str());
+	//printf("Insert after instructions: %s\n", formatInstruction(previous->getZasmInstruction()).c_str());
 	this->setPrev(previous);
 
 	this->setNext(previous->getNext());
@@ -103,6 +105,24 @@ Instruction* Instruction::insertBefore( Instruction* next)
 void Instruction::addOperand(BaseOperand* baseOperand){
 	baseOperand->setParent(this);
 	operand_list.push_back(baseOperand);
+}
+
+void Instruction::deleteOperand(BaseOperand* baseOperand)
+{
+}
+
+void Instruction::replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand)
+{
+	auto foundOperand = std::find(operand_list.begin(), operand_list.end(), oldOperand);
+
+	if (foundOperand == operand_list.end())
+		throw std::runtime_error("Failed during replace operand.Operand NotFound");
+
+	this->instruction.setOperand(oldOperand->getIndex(), newOperand->getZasmOperand());
+
+	delete* foundOperand;
+
+	*foundOperand = newOperand;
 }
 
 zasm::InstructionDetail Instruction::getZasmInstruction()

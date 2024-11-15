@@ -8,6 +8,15 @@ void RegisterOperand::LinkOperand()
    if (!previous || this->getZasmOperand().get<zasm::Reg>().getId() == zasm::Reg::Id::None)
 	   return;
 
+   Instruction* parent = this->getParent();
+
+   
+	if (parent->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Pop &&
+		parent->getOperand(0)->getZasmOperand().holds<zasm::Reg>() &&
+		parent->getOperand(0)->getZasmOperand().get<zasm::Reg>() == zasm::x86::rsp) {
+		return;
+    }
+
    do {
 	 
 	   for (auto& op : previous->getOperands()) {
@@ -48,7 +57,7 @@ void RegisterOperand::LinkOperand()
 
 void RegisterOperand::destroy()
 {
-	BaseDestroy();
+	delete this;
 }
 
 bool RegisterOperand::isSameRegister( RegisterOperand& register_)

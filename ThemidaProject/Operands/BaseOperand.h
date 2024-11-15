@@ -11,6 +11,9 @@ enum class OperandAction {
 	WRITE,
 	READWRITE
 };
+
+class ConstantOperand;
+
 class BaseOperand
 {
 private:
@@ -18,7 +21,8 @@ private:
 	std::vector<BaseOperand*>use_list;
 	BaseOperand* next;
 	BaseOperand* prev;
-
+	uintptr_t index;
+	
 	OperandAction op_action;
 	zasm::Operand operand;
 public:
@@ -35,9 +39,18 @@ public:
 	void setPrev(BaseOperand* opPrev);
 	void setNext(BaseOperand* opNext);
 	void addUse(BaseOperand* useOperand);
-	void BaseDestroy();
-	void DeleteAllUses();
 	void ClearUseList();
+	void replaceOneUse(BaseOperand* oldUse, BaseOperand* newUse);
+	void replaceOperandWith(BaseOperand* newOperand);
+	void deleteUse(BaseOperand* operand);
+	void transferAllUses(BaseOperand* operand);
+	void makeConstant(ConstantOperand* constantOp);
+	void emplaceBetween();
+	bool hasOneUse();
+	bool hasOneUser();
+
+	uintptr_t getIndex();
+	void setIndex(uintptr_t index);
 
 	OperandAction getOperandAccess();
 	void setOperandAction(OperandAction action);
@@ -46,15 +59,13 @@ public:
 
 	virtual void LinkOperand() = 0;
 
-	BaseOperand(OperandAction op_action,const zasm::Operand& operand, Instruction* parent = nullptr, BaseOperand* next = nullptr,
+	BaseOperand(OperandAction op_action,const zasm::Operand& operand,uintptr_t index ,Instruction* parent = nullptr, BaseOperand* next = nullptr,
 		BaseOperand* prev = nullptr) : parent(parent), next(next),
-		prev(prev), op_action(op_action),operand(operand) {}
+		prev(prev), op_action(op_action),operand(operand) ,index(index){}
 
 	virtual void destroy() = 0;
 
 	void replaceAllUses(BaseOperand* operand);
-	void replaceNextPrev(BaseOperand* operand);
 	
-	void deleteAllUses();
 };
 

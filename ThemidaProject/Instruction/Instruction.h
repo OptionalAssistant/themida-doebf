@@ -38,6 +38,10 @@ public:
 	 Instruction* insertBefore( Instruction* instruction);
 
 	 void addOperand(BaseOperand* baseOperand);
+	 void deleteOperand(BaseOperand* baseOperand);
+
+	 void replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand);
+
 
 	 zasm::InstructionDetail getZasmInstruction();
 };

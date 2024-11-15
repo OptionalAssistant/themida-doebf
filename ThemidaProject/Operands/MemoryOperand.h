@@ -33,9 +33,9 @@ public:
 
 	MemoryOperand(RegisterOperand* base, RegisterOperand* index,
 		ConstantOperand* displacement, ConstantOperand* scale,
-		OperandAction op_action,const zasm::Operand& operand)
+		OperandAction op_action,const zasm::Operand& operand,uintptr_t index_op)
 		: base(base), index(index),scale(scale), displacement(displacement),
-		BaseOperand(op_action,operand) {}
+		BaseOperand(op_action,operand, index_op) {}
 
 	MemoryOperand() = default;
 };

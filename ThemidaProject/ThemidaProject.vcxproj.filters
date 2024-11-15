@@ -60,6 +60,15 @@
     <ClCompile Include="Optimizations\SimplifyStackOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Optimizations\SimplifyConstantOperation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimizations\SimplifyDCEPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimizations\Helpers\Helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emulator\emu.h">
@@ -102,6 +111,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Optimizations\SimplifyStackOperation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimizations\SimplifyConstantOperation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimizations\SimplifyDCEPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimizations\Helpers\Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

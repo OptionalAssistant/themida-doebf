@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Optimizations\Helpers\Helpers.cpp" />
     <ClCompile Include="Optimizations\SimplifyStackOperation.cpp" />
     <ClCompile Include="Optimizations\BaseOptimization.cpp" />
     <ClCompile Include="Devirt\deobf.cpp" />
@@ -151,11 +152,14 @@
     <ClCompile Include="Optimizations\Optimizer.cpp" />
     <ClCompile Include="PE\PE.cpp" />
     <ClCompile Include="Operands\RegisterOperand.cpp" />
+    <ClCompile Include="Optimizations\SimplifyConstantOperation.cpp" />
+    <ClCompile Include="Optimizations\SimplifyDCEPass.cpp" />
     <ClCompile Include="ThemidaProject.cpp" />
     <ClCompile Include="utils\Logger.cpp" />
     <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Optimizations\Helpers\Helpers.h" />
     <ClInclude Include="Optimizations\SimplifyStackOperation.h" />
     <ClInclude Include="Optimizations\BaseOptimization.h" />
     <ClInclude Include="Devirt\deobf.h" />
@@ -168,6 +172,8 @@
     <ClInclude Include="Optimizations\Optimizer.h" />
     <ClInclude Include="PE\PE.h" />
     <ClInclude Include="Operands\RegisterOperand.h" />
+    <ClInclude Include="Optimizations\SimplifyConstantOperation.h" />
+    <ClInclude Include="Optimizations\SimplifyDCEPass.h" />
     <ClInclude Include="utils\Logger.h" />
     <ClInclude Include="utils\Utils.h" />
   </ItemGroup>

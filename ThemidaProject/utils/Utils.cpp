@@ -242,12 +242,9 @@ void formateLinkedInstructions(Instruction* instruction)
 	for (Instruction* currentInstruction = instruction;
 		currentInstruction != nullptr; currentInstruction = currentInstruction->getNext()) {
 
-		if (currentInstruction->getCount() == 294)
-			printf("");
-
 		std::string res = formateLinkOneInstruction(currentInstruction);
 
-		printf("%s\n\n", res.c_str());
+		//printf("%s\n\n", res.c_str());
 		logger->log(res + "\n");
 	}
 

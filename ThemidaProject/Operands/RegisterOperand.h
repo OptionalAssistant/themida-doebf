@@ -12,9 +12,9 @@ public:
 	
 	bool isSameRegister( RegisterOperand& register_);
 
-	RegisterOperand(const zasm::Operand& operand,
+	RegisterOperand(const zasm::Operand& operand,uintptr_t index,
 		OperandAction op_action) 
-		: BaseOperand(op_action,operand) {}
+		: BaseOperand(op_action,operand,index) {}
 
 	
 };

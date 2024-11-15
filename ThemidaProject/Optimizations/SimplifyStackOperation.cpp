@@ -6,6 +6,7 @@
 #include "../Linker/Linker.h"
 #include "../utils/Utils.h"
 #include "../utils/Logger.h"
+#include "Helpers/Helpers.h"
 
 bool SimplifyStackOperation::run(Instruction* instruction)
 {
@@ -14,31 +15,59 @@ bool SimplifyStackOperation::run(Instruction* instruction)
         currentInstruction = currentInstruction->getNext()) {
    
         //Simplify dead memory push
-      /*  if (currentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push) {
+        if (currentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push) {
 
                 if (!currentInstruction->getOperand(2)->hasUses()) {
-
-                    const auto& zasmMnemonic = currentInstruction->getZasmInstruction().getMnemonic();
  
-                        printf("Simplify dead memory push: %d", currentInstruction->getCount());
+                     //   printf("Simplify dead memory push: %d \n", currentInstruction->getCount());
 
-                        const auto& newZasmInstruction = zasm::InstructionDetail()
-                            .setMnemonic(zasm::x86::Mnemonic::Sub)
-                            .addOperand(zasm::x86::rsp)
-                            .addOperand(zasm::Imm(8));
+
+                        zasm::InstructionDetail::OperandsAccess opAccess;
+                        zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+                        opAccess.set(0, zasm::Operand::Access::ReadWrite);
+                        opAccess.set(1, zasm::Operand::Access::Read);
+
+                        opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+                        opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+                        std::array<zasm::Operand, 10>ops;
+                        ops[0] = zasm::x86::rsp;
+                        ops[1] = zasm::Imm(8);
+
+                        const auto& newZasmInstruction = zasm::InstructionDetail({},
+                            zasm::x86::Mnemonic::Sub, 2,
+                            ops, opAccess, opVisibility, {}, {});
 
 
                         Instruction* newInstruction = zasmToInstruction(newZasmInstruction);
 
                         RegisterOperand* operand = dynamic_cast<RegisterOperand*>(currentInstruction->getOperand(1));
 
-                        newInstruction->getOperand(0)->replaceAllUses(operand);
+                        newInstruction->getOperand(0)->replaceOperandWith(operand);
 
-                        newInstruction->getOperand(0)->setNext(operand->getNext());
-                        newInstruction->getOperand(0)->setPrev(operand->getPrev());
+                        if (currentInstruction->getOperand(1)->getPrev()) {
 
-                        currentInstruction->getOperand(1)->getPrev()->addUse(newInstruction->getOperand(0));
+                            MemoryOperand* oldMemory = dynamic_cast<MemoryOperand*>(currentInstruction->getOperand(2));
 
+                            currentInstruction->getOperand(1)->getPrev()->replaceOneUse(
+                                operand, newInstruction->getOperand(0));
+
+                            currentInstruction->getOperand(1)->getPrev()->deleteUse(oldMemory->getBase());
+
+                            currentInstruction->getOperand(2)->getNext()
+                                ->setPrev(currentInstruction->getOperand(2)->getPrev());
+
+                            if (currentInstruction->getOperand(2)->getPrev()) {
+                                currentInstruction->getOperand(2)->getPrev()
+                                    ->setNext(currentInstruction->getOperand(2)->getNext());
+                            }
+
+                        }
+                   
+                        if (currentInstruction->getOperand(0)->getPrev()) {
+                            currentInstruction->getOperand(0)->getPrev()->deleteUse(currentInstruction->getOperand(0));
+                        }
                         newInstruction->insertAfter(currentInstruction);
 
 
@@ -52,7 +81,7 @@ bool SimplifyStackOperation::run(Instruction* instruction)
                 }
 
               
-        }*/
+        }
        
         //Simplify sub rsp,8 to push
          if (currentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Sub) {
@@ -69,7 +98,7 @@ bool SimplifyStackOperation::run(Instruction* instruction)
                         nextInstruction->getZasmInstruction().getOperand(0).
                         get<zasm::Mem>().getBase() == zasm::x86::rsp) {
 
-                        printf("Simplify Sub rsp to  push: %d", currentInstruction->getCount());
+                //        printf("Simplify Sub rsp to  push: %d \n", currentInstruction->getCount());
 
                         zasm::InstructionDetail::OperandsAccess opAccess;
                         zasm::InstructionDetail::OperandsVisibility opVisibility;
@@ -81,9 +110,6 @@ bool SimplifyStackOperation::run(Instruction* instruction)
                         opVisibility.set(0, zasm::Operand::Visibility::Explicit);
                         opVisibility.set(1, zasm::Operand::Visibility::Hidden);
                         opVisibility.set(2, zasm::Operand::Visibility::Hidden);
-
-                        zasm::Instruction::Attribs attribs;
-                        zasm::InstructionDetail::Category category;
 
                         std::array<zasm::Operand, 10>ops;
                         ops[0] = nextInstruction->getZasmInstruction().getOperand(1);
@@ -97,39 +123,36 @@ bool SimplifyStackOperation::run(Instruction* instruction)
                         Instruction* newInstruction = zasmToInstruction(newZasmInstruction);
 
                         
-                        newInstruction->getOperand(1)->replaceAllUses(currentInstruction->getOperand(0));
-                        newInstruction->getOperand(2)->replaceAllUses(nextInstruction->getOperand(0));
+                        newInstruction->getOperand(1)->replaceOperandWith(currentInstruction->getOperand(0));
+                        newInstruction->getOperand(2)->replaceOperandWith(nextInstruction->getOperand(0));
+            
 
-                        newInstruction->getOperand(1)->setPrev(currentInstruction->getOperand(0)->getPrev());
-                        newInstruction->getOperand(1)->setNext(currentInstruction->getOperand(0)->getNext());
-
-                        if (currentInstruction->getOperand(0)->getPrev())
-                            currentInstruction->getOperand(0)->getPrev()->setNext(newInstruction->getOperand(1));
-
-                        if (currentInstruction->getOperand(0)->getNext())
-                            currentInstruction->getOperand(0)->getNext()->setPrev(newInstruction->getOperand(1));
-
-
-                        newInstruction->getOperand(2)->setPrev(nextInstruction->getOperand(0)->getPrev());
-                        newInstruction->getOperand(2)->setNext(nextInstruction->getOperand(0)->getNext());
-                 
-
-                        if (nextInstruction->getOperand(0)->getPrev())
-                            nextInstruction->getOperand(0)->getPrev()->setNext(newInstruction->getOperand(2));
-
-                        if (nextInstruction->getOperand(0)->getNext())
-                            nextInstruction->getOperand(0)->getNext()->setPrev(newInstruction->getOperand(2));
-
-
-                        currentInstruction->getOperand(0)->getPrev()->addUse(newInstruction->getOperand(1));
+                        if(currentInstruction->getOperand(0)->getPrev())
+                        currentInstruction->getOperand(0)->getPrev()
+                            ->replaceOneUse(currentInstruction->getOperand(0), newInstruction->getOperand(1));
 
                         newInstruction->getOperand(0)->setPrev(nextInstruction->getOperand(1)->getPrev());
 
-                        newInstruction->insertAfter(currentInstruction);
-
-                        MemoryOperand* memoryOp = dynamic_cast<MemoryOperand*>(newInstruction->getOperand(2));
+                        if (nextInstruction->getOperand(1)->getPrev()) {
+                            nextInstruction->getOperand(1)->getPrev()->replaceOneUse(
+                                nextInstruction->getOperand(1),
+                                newInstruction->getOperand(0));
+                        }
+                
 
                         MemoryOperand* oldMemoryOp = dynamic_cast<MemoryOperand*>(nextInstruction->getOperand(0));
+                        MemoryOperand* memoryOp = dynamic_cast<MemoryOperand*>(newInstruction->getOperand(2));
+
+                        newInstruction->getOperand(1)->deleteUse(oldMemoryOp->getBase());
+
+                        if (newInstruction->getOperand(1)->getPrev()) {
+                            newInstruction->getOperand(1)->getPrev()->addUse(memoryOp->getBase());
+                            memoryOp->getBase()->setPrev(newInstruction->getOperand(1)->getPrev());
+                        }
+
+                        newInstruction->insertAfter(currentInstruction);
+
+          
 
                         memoryOp->setMemoryAddress(oldMemoryOp->getMemoryAddress());
 
@@ -144,11 +167,205 @@ bool SimplifyStackOperation::run(Instruction* instruction)
                 }
             
         
-            }}
+            }
+         }
 
+         //Simplify add rsp,8 to pop
+         if (currentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Add &&
+             currentInstruction->getZasmInstruction().getOperand(0).holds<zasm::Reg>() &&
+             currentInstruction->getZasmInstruction().getOperand(0).get<zasm::Reg>() == zasm::x86::rsp &&
+             currentInstruction->getZasmInstruction().getOperand(1).holds<zasm::Imm>() &&
+             currentInstruction->getZasmInstruction().getOperand(1).get<zasm::Imm>() == 8) {
+
+             RegisterOperand* op1 = dynamic_cast<RegisterOperand*>(currentInstruction->getOperand(0));
+
+             if (!op1) {
+                 printf("Wtf??\n");
+                 throw std::runtime_error("Error during simplify add rsp 8 to pop");
+             }
+
+             BaseOperand* foundOperand = findPrevAccessRegister(currentInstruction->getPrev(), op1);
+
+             if (!foundOperand) {
+                 printf("Errrr?????");
+                 continue;
+             }
+             Instruction* parentInstruction = foundOperand->getParent();
+
+             if (parentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Mov &&
+                 parentInstruction->getZasmInstruction().getOperand(0).holds<zasm::Reg>() &&
+                 parentInstruction->getZasmInstruction().getOperand(1).holds<zasm::Mem>() &&
+                 parentInstruction->getZasmInstruction().getOperand(1).get<zasm::Mem>().getBase() == zasm::x86::rsp) {
+
+
+             //    printf("Simplify add rsp,8 to pop : %d %s \n", currentInstruction->getCount(),
+                   //  formatInstruction(currentInstruction->getZasmInstruction()).c_str());
+
+               //  printf("Found mov mem before add rsp,8 pop detecting %d %s \n", parentInstruction->getCount(),
+                     //formatInstruction(parentInstruction->getZasmInstruction()).c_str());
+
+
+
+                 zasm::InstructionDetail::OperandsAccess opAccess;
+                 zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+                 opAccess.set(0, zasm::Operand::Access::Write);
+                 opAccess.set(1, zasm::Operand::Access::ReadWrite);
+                 opAccess.set(2, zasm::Operand::Access::Read);
+
+                 opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+                 opVisibility.set(1, zasm::Operand::Visibility::Hidden);
+                 opVisibility.set(2, zasm::Operand::Visibility::Hidden);
+
+                 std::array<zasm::Operand, 10>ops;
+                 ops[0] = parentInstruction->getZasmInstruction().getOperand(0);
+                 ops[1] = currentInstruction->getZasmInstruction().getOperand(0);
+                 ops[2] = parentInstruction->getZasmInstruction().getOperand(1);
+
+                 const auto& newZasmInstruction = zasm::InstructionDetail({},
+                     zasm::x86::Mnemonic::Pop, 3,
+                     ops, opAccess, opVisibility, {}, {});
+
+                 Instruction* newInstruction = zasmToInstruction(newZasmInstruction);
+
+                 newInstruction->getOperand(0)->replaceOperandWith(parentInstruction->getOperand(0));
+                 newInstruction->getOperand(1)->replaceOperandWith(currentInstruction->getOperand(0));
+                 
+                 if (currentInstruction->getOperand(0)->getPrev()) {
+                    
+                     currentInstruction->getOperand(0)->getPrev()->replaceOneUse(
+                         currentInstruction->getOperand(0), newInstruction->getOperand(1)
+                     );
+
+                     MemoryOperand* oldMemoryBase = dynamic_cast<MemoryOperand*>(parentInstruction->getOperand(1));
+                     MemoryOperand* newMemoryBase = dynamic_cast<MemoryOperand*>(newInstruction->getOperand(2));
+
+
+                     currentInstruction->getOperand(0)->getPrev()->replaceOneUse(
+                         oldMemoryBase->getBase(), newMemoryBase->getBase()
+                     );
+
+                     newMemoryBase->getBase()->setPrev(currentInstruction->getOperand(0)->getPrev());
+                     newMemoryBase->setMemoryAddress(oldMemoryBase->getMemoryAddress());
+
+                 }
+
+                 if (parentInstruction->getOperand(1)->getPrev()) {
+                     parentInstruction->getOperand(1)->getPrev()->replaceOneUse(
+                     parentInstruction->getOperand(1),newInstruction->getOperand(2)
+                     );
+                 }
+
+                 newInstruction->getOperand(2)->setPrev(parentInstruction->getOperand(1)->getPrev());
+
+
+
+                 MemoryOperand* oldMemoryOp = dynamic_cast<MemoryOperand*>(parentInstruction->getOperand(1));
+                 MemoryOperand* memoryOp = dynamic_cast<MemoryOperand*>(newInstruction->getOperand(2));
+
+
+                 newInstruction->insertAfter(currentInstruction);
+
+                 parentInstruction->Delete();
+                 currentInstruction->Delete();
+
+                 currentInstruction = newInstruction;
+
+                 isExtraPass = true;
+
+             }
+         }
+
+         //Simplify push pop to move
+         if (currentInstruction->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push) {
+             
+             BaseOperand* rspOperand = currentInstruction->getOperand(1);
+
+             if (!rspOperand->getNext() || !rspOperand->hasOneUser() ||
+                 !currentInstruction->getOperand(2)->hasOneUse())
+                 continue;
+
+             Instruction* nextInstruction = rspOperand->getNext()->getParent();
+
+             if (nextInstruction->getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Pop)
+                 continue;
+
+             RegisterOperand* registerOperand = dynamic_cast<RegisterOperand*>(currentInstruction->getOperand(0));
+             
+             if (registerOperand) {
+                 BaseOperand* writeBetween = findWriteRegisterInRange(currentInstruction,
+                     nextInstruction, registerOperand);
+
+                 
+                 if (writeBetween) {
+                     printf("Detecting write to pushed register %d continue...\n", currentInstruction->getCount());
+                     continue;
+                 }
+                     
+             }
+             printf("Simplify push pop to move : %d \n", currentInstruction->getCount());
+
+
+             zasm::InstructionDetail::OperandsAccess opAccess;
+             zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+             opAccess.set(0, zasm::Operand::Access::Write);
+             opAccess.set(1, zasm::Operand::Access::Read);
+
+             opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+             opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+             std::array<zasm::Operand, 10>ops;
+             ops[0] = nextInstruction->getOperand(0)->getZasmOperand();
+             ops[1] = currentInstruction->getOperand(0)->getZasmOperand();
+                
+             const auto& newZasmInstruction = zasm::InstructionDetail({},
+                 zasm::x86::Mnemonic::Mov, 2,
+                 ops, opAccess, opVisibility, {}, {});
+
+
+             Instruction* newInstruction = zasmToInstruction(newZasmInstruction);
+
+             newInstruction->getOperand(0)->replaceOperandWith(nextInstruction->getOperand(0));
+             
+             if (currentInstruction->getOperand(0)->getPrev()) {
+                 currentInstruction->getOperand(0)->getPrev()->replaceOneUse(currentInstruction->getOperand(0),
+                     newInstruction->getOperand(1));
+             }
+
+             newInstruction->getOperand(1)->setPrev(currentInstruction->getOperand(0)->getPrev());
+
+             if (currentInstruction->getOperand(1)->getPrev()) {
+                 currentInstruction->getOperand(1)->getPrev()
+                     ->replaceAllUses(nextInstruction->getOperand(1));
+
+             currentInstruction->getOperand(1)->getPrev()->setNext(nextInstruction->getOperand(1)->getNext());
+
+             }
+
+             if (nextInstruction->getOperand(1)->getNext())
+                 nextInstruction->getOperand(1)->getNext()->setPrev(currentInstruction->getOperand(1)->getPrev());
+
+
+             if (currentInstruction->getOperand(2)->getNext()) {
+                 currentInstruction->getOperand(2)->
+                     getNext()->setPrev(currentInstruction->getOperand(2)->getPrev());
+             }
+
+             newInstruction->insertAfter(nextInstruction);
+
+             currentInstruction->Delete();
+             nextInstruction->Delete();
+
+             currentInstruction = newInstruction;
+             
+             isExtraPass = true;
+
+             logger->log("Okey\n");
+             formateLinkedInstructions(instruction);
+         }
     }
-    logger->log("AGAIN");
-    formateLinkedInstructions(instruction);
-        
+    
+  
     return isExtraPass;
 }
