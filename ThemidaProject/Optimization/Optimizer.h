@@ -12,4 +12,3 @@ public:
 	Optimizer();
 	bool run(Instruction* instruction);
 };
-

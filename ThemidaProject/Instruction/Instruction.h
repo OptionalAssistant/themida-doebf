@@ -22,27 +22,26 @@ public:
 
 	Instruction* getNext()const;
 	Instruction* getPrev()const;
-	
+
 	Instruction(zasm::InstructionDetail instruction) : prev(nullptr), next(nullptr),
-		instruction(instruction),count(0) {}
+		instruction(instruction), count(0) {}
 
-	 uintptr_t getCount();
-	 void setCount(uintptr_t count);
+	uintptr_t getCount();
+	void setCount(uintptr_t count);
 
-	 void LinkInstruction();
+	void LinkInstruction();
 
-	 void setPrev(Instruction* instruction);
-	 void setNext( Instruction* instruction);
+	void setPrev(Instruction* instruction);
+	void setNext(Instruction* instruction);
 
-	 Instruction* insertAfter( Instruction* instruction);
-	 Instruction* insertBefore( Instruction* instruction);
+	Instruction* insertAfter(Instruction* instruction);
+	Instruction* insertBefore(Instruction* instruction);
 
-	 void addOperand(BaseOperand* baseOperand);
-	 void deleteOperand(BaseOperand* baseOperand);
+	void addOperand(BaseOperand* baseOperand);
+	void deleteOperand(BaseOperand* baseOperand);
 
-	 void replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand);
+	void replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand);
 
 
-	 zasm::InstructionDetail getZasmInstruction();
+	zasm::InstructionDetail getZasmInstruction();
 };
-

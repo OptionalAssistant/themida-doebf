@@ -1,10 +1,13 @@
 #include "ConstantOperand.h"
 
-void ConstantOperand::LinkOperand()
+void ConstantOperand::Link()
+{
+}
+
+void ConstantOperand::Unlink()
 {
 }
 
 void ConstantOperand::destroy()
 {
-	delete this;
 }

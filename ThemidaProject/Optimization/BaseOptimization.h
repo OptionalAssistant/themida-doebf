@@ -7,4 +7,3 @@ class BaseOptimization
 public:
 	virtual bool run(Instruction* instruction) = 0;
 };
-

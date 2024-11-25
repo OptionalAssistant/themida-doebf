@@ -1,10 +1,11 @@
+#include "Instruction.h"
 #include <stdexcept>
 
 #include "Instruction.h"
 #include "../Operands/BaseOperand.h"
 #include "../utils/Utils.h"
 
-std::vector<BaseOperand*>& Instruction::getOperands() 
+std::vector<BaseOperand*>& Instruction::getOperands()
 {
 	return operand_list;
 }
@@ -57,8 +58,8 @@ void Instruction::setCount(uintptr_t count)
 
 void Instruction::LinkInstruction()
 {
-	for (auto& op: operand_list) {
-		op->LinkOperand();
+	for (auto& op : operand_list) {
+		op->Link();
 	}
 }
 
@@ -67,7 +68,7 @@ void Instruction::setPrev(Instruction* instruction)
 	prev = instruction;
 }
 
-void Instruction::setNext( Instruction* instruction)
+void Instruction::setNext(Instruction* instruction)
 {
 	next = instruction;
 }
@@ -79,8 +80,8 @@ Instruction* Instruction::insertAfter(Instruction* previous)
 
 	this->setNext(previous->getNext());
 
-	if(previous->getNext())
-	previous->getNext()->setPrev(this);
+	if (previous->getNext())
+		previous->getNext()->setPrev(this);
 
 
 	previous->setNext(this);
@@ -91,7 +92,7 @@ Instruction* Instruction::insertAfter(Instruction* previous)
 	return this;
 }
 
-Instruction* Instruction::insertBefore( Instruction* next)
+Instruction* Instruction::insertBefore(Instruction* next)
 {
 	this->setPrev(next->getPrev());
 	this->setNext(next);
@@ -102,7 +103,7 @@ Instruction* Instruction::insertBefore( Instruction* next)
 	return this;
 }
 
-void Instruction::addOperand(BaseOperand* baseOperand){
+void Instruction::addOperand(BaseOperand* baseOperand) {
 	baseOperand->setParent(this);
 	operand_list.push_back(baseOperand);
 }
@@ -129,4 +130,3 @@ zasm::InstructionDetail Instruction::getZasmInstruction()
 {
 	return instruction;
 }
-

@@ -1,5 +1,5 @@
 #pragma once
-#include "../Optimizations/Optimizer.h"
+#include "../Optimization/Optimizer.h"
 
 class EmulatorCPU;
 class PE;
@@ -11,7 +11,7 @@ private:
 	PE* m_pe;
 	Optimizer* optimizer;
 public:
-	deobf(EmulatorCPU* cpu_, PE* pe) : m_cpu(cpu_), m_pe(pe),optimizer(new Optimizer()) {}
+	deobf(EmulatorCPU* cpu_, PE* pe) : m_cpu(cpu_), m_pe(pe), optimizer(new Optimizer()) {}
 
 	void run(uintptr_t);
 

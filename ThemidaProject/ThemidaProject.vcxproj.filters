@@ -30,6 +30,9 @@
     <ClCompile Include="utils\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Devirt\deobf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Operands\BaseOperand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,31 +45,40 @@
     <ClCompile Include="Operands\MemoryOperand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Operands\FlagsOperand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Operands\ConstantOperand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Linker\Linker.cpp">
+    <ClCompile Include="ByteOperand\MemoryByte.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Devirt\deobf.cpp">
+    <ClCompile Include="ByteOperand\OperandUnit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\Optimizer.cpp">
+    <ClCompile Include="ByteOperand\FlagBit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\BaseOptimization.cpp">
+    <ClCompile Include="ByteOperand\RegisterByte.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\SimplifyStackOperation.cpp">
+    <ClCompile Include="Helpers\Linker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\SimplifyConstantOperation.cpp">
+    <ClCompile Include="callbacks\callbacks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\SimplifyDCEPass.cpp">
+    <ClCompile Include="Optimization\BaseOptimization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimizations\Helpers\Helpers.cpp">
+    <ClCompile Include="Optimization\Optimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\SimplifyStackOperation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\SimplifyConstantOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,6 +95,9 @@
     <ClInclude Include="utils\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Devirt\deobf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Operands\BaseOperand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -95,31 +110,40 @@
     <ClInclude Include="Operands\MemoryOperand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Operands\FlagsOperand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Operands\ConstantOperand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Linker\Linker.h">
+    <ClInclude Include="ByteOperand\MemoryByte.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Devirt\deobf.h">
+    <ClInclude Include="ByteOperand\OperandUnit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\Optimizer.h">
+    <ClInclude Include="ByteOperand\FlagBit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\BaseOptimization.h">
+    <ClInclude Include="ByteOperand\RegisterByte.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\SimplifyStackOperation.h">
+    <ClInclude Include="Helpers\Linker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\SimplifyConstantOperation.h">
+    <ClInclude Include="callbacks\callbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\SimplifyDCEPass.h">
+    <ClInclude Include="Optimization\BaseOptimization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimizations\Helpers\Helpers.h">
+    <ClInclude Include="Optimization\Optimizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyStackOperation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyConstantOperation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

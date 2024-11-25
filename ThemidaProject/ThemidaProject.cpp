@@ -5,15 +5,12 @@
 #include "PE/PE.h"
 
 #include "Utils/Logger.h"
-#include "Utils/Logger.h"
-#include "./Linker/Linker.h"
 #include "./Devirt/deobf.h"
-#include "./Optimizations/Optimizer.h"
 
 int main()
 {
     logger = new Logger("D:\\log.txt");
-    std::string path = "C:\\Users\\U1\\source\\repos\\ConsoleApplication1\\x64\\Release\\ConsoleApplication1_protected.exe";
+    std::string path = "C:\\Users\\U1\\source\\repos\\ConsoleApplication1\\x64\\Release\\ConsoleApplication1.vmp.exe";
 
     std::vector<BYTE>data;
     if (!ReadFile(path, data))

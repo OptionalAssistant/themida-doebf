@@ -1,6 +1,85 @@
 #include "MemoryOperand.h"
 #include "RegisterOperand.h"
-#include "ConstantOperand.h"
+
+#include "../ByteOperand/MemoryByte.h"
+
+#include "../Instruction/Instruction.h"
+
+void MemoryOperand::Link()
+{
+	if (this->getParent()->getCount() == 985)
+		printf("");
+
+    base->Link();
+    index->Link();
+
+    Instruction* prev = this->getParent()->getPrev();
+
+    if (!prev)
+        return;
+
+
+	std::vector<MemoryByte*> memoryBytes = this->getMemoryBytes();
+	do
+	{
+		for (auto& op : prev->getOperands()) {
+			MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
+
+			if (!memoryOperand)
+				continue;
+
+			const OperandAction opAccess = memoryOperand->getOperandAccess();
+
+			if (opAccess == OperandAction::WRITE ||
+				opAccess == OperandAction::READWRITE) {
+				std::vector<MemoryByte*>& prevMemoryBytes = memoryOperand->getMemoryBytes();
+
+				for (auto it = memoryBytes.begin(); it != memoryBytes.end(); /* no increment here */) {
+					auto memoryByte = *it;
+
+					auto foundIt = std::find_if(prevMemoryBytes.begin(), prevMemoryBytes.end(),
+						[&](MemoryByte* memBytePrev) {
+							return memBytePrev->getMemoryAddress() == memoryByte->getMemoryAddress();
+						});
+
+					if (foundIt != prevMemoryBytes.end()) {
+						MemoryByte* foundByteRegister = *foundIt;
+
+						memoryByte->setPrev(foundByteRegister);
+
+						if (this->getOperandAccess() == OperandAction::READ ||
+							this->getOperandAccess() == OperandAction::READWRITE) {
+							foundByteRegister->addUse(memoryByte);
+						}
+
+						if (this->getOperandAccess() == OperandAction::WRITE ||
+							this->getOperandAccess() == OperandAction::READWRITE) {
+							foundByteRegister->setNext(memoryByte);
+						}
+
+						// Erase `registerByte` from `registerBytes`
+						it = memoryBytes.erase(it); // Returns the next valid iterator
+					}
+					else {
+						++it; // Increment iterator if no deletion
+					}
+				}
+			}
+		}
+
+		prev = prev->getPrev();
+
+	} while (prev != nullptr && !memoryBytes.empty());
+}
+
+
+void MemoryOperand::Unlink()
+{
+}
+
+void MemoryOperand::destroy()
+{
+}
 
 RegisterOperand* MemoryOperand::getBase()
 {
@@ -22,23 +101,23 @@ ConstantOperand* MemoryOperand::getScale()
     return scale;
 }
 
-void MemoryOperand::setBase(RegisterOperand* op){
+void MemoryOperand::setBase(RegisterOperand* op) {
     base = op;
 }
 
-void MemoryOperand::setIndex(RegisterOperand* op){
+void MemoryOperand::setIndex(RegisterOperand* op) {
     index = op;
 }
 
-void MemoryOperand::setDisplacement(ConstantOperand* op){
+void MemoryOperand::setDisplacement(ConstantOperand* op) {
     displacement = op;
 }
 
-void MemoryOperand::setScale(ConstantOperand* op){
+void MemoryOperand::setScale(ConstantOperand* op) {
     scale = op;
 }
 
-void MemoryOperand::setMemoryAddress(uintptr_t memAddress){
+void MemoryOperand::setMemoryAddress(uintptr_t memAddress) {
     this->memoryAddress = memAddress;
 }
 
@@ -47,57 +126,19 @@ uintptr_t MemoryOperand::getMemoryAddress()
     return memoryAddress;
 }
 
-void MemoryOperand::LinkOperand()
+std::vector<MemoryByte*>& MemoryOperand::getMemoryBytes()
 {
-    base->LinkOperand();
-    index->LinkOperand();
-
-    Instruction* previous = this->getParent()->getPrev();
-
-    if (!previous)
-        return;
-
-    do {
-
-        for (auto& op : previous->getOperands()) {
-            
-            MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
-
-            if (memoryOperand) {
-                uintptr_t memoryAddress = memoryOperand->getMemoryAddress();
-
-                if (memoryAddress == this->getMemoryAddress()) {
-
-                    if (op->getOperandAccess() == OperandAction::WRITE ||
-                        op->getOperandAccess() == OperandAction::READWRITE) {
-
-                        this->setPrev(op);
-
-                        if (this->getOperandAccess() == OperandAction::READ ||
-                            this->getOperandAccess() == OperandAction::READWRITE) {
-                            op->addUse(this);
-                        }
-                         if (this->getOperandAccess() == OperandAction::WRITE ||
-                            this->getOperandAccess() == OperandAction::READWRITE) {
-                            op->setNext(this);
-                        }
-                        return;
-
-                    }
-                }
-            }
-        }
-     
-       previous = previous->getPrev();
-    
-    } while (previous != nullptr);
+    return memoryBytes;
 }
 
-void MemoryOperand::destroy()
+void MemoryOperand::setMemoryBytes(std::vector<MemoryByte*>& memoryBytes)
 {
-    base->destroy();
-    index->destroy();
-    displacement->destroy();
-    scale->destroy();
-    delete this;
+    this->memoryBytes = memoryBytes;
 }
+
+
+
+
+
+
+

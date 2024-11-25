@@ -1426,34 +1426,164 @@ void EmulatorCPU::HandleCmovo()
 	WriteResult(instruction.getOperand(0), src);
 }
 
+void EmulatorCPU::HandleCdqe()
+{
+	int eax = static_cast<int>(reg_read(zasm::x86::eax));
+
+	int64_t rax = static_cast<int64_t>(eax); // Sign-extend to 64-bit
+
+	WriteResult(zasm::x86::rax, rax);
+}
+
+void EmulatorCPU::HandleCbw()
+{
+	signed char al = static_cast<signed char>(reg_read(zasm::x86::al));
+
+	signed short ax = static_cast<signed short>(al); // Sign-extend to 64-bit
+
+	WriteResult(zasm::x86::ax, ax);
+}
+
+void EmulatorCPU::HandleCwde()
+{
+	signed short ax = static_cast<signed short>(reg_read(zasm::x86::ax));
+
+	int eax = static_cast<int>(ax); // Sign-extend to 64-bit
+
+	WriteResult(zasm::x86::eax, eax);
+}
+
+void EmulatorCPU::HandleCwd()
+{
+	int16_t result = static_cast<int16_t>(reg_read(zasm::x86::ax));
+
+	result = result < 0 ? -1 : 0;
+
+	WriteResult(zasm::x86::dx, result);
+}
+
+void EmulatorCPU::HandleBtc()
+{
+	uintptr_t src = GetValue(instruction.getOperand(1));
+	uintptr_t dst = GetValue(instruction.getOperand(0));
+
+	uint32_t bitPos = src & 0x1F;
+
+	// Extract the bit at bitPos and set the carry flag
+	bool carryFlag = (dst >> bitPos) & 1;
+
+	if (carryFlag)
+		SetCarryFlag();
+	else
+		ClearCarryFlag();
+
+	dst ^= (1U << bitPos);
+
+	WriteResult(instruction.getOperand(0), dst);
+}
+
+void EmulatorCPU::HandleBts()
+{
+	uintptr_t src = GetValue(instruction.getOperand(1));
+	uintptr_t dst = GetValue(instruction.getOperand(0));
+
+	uint32_t bitPos = src & 0x1F;
+
+	// Extract the bit at bitPos and set the carry flag
+	bool carryFlag = (dst >> bitPos) & 1;
+
+	if (carryFlag)
+		SetCarryFlag();
+	else
+		ClearCarryFlag();
+
+	dst |= (1U << bitPos);
+
+	WriteResult(instruction.getOperand(0), dst);
+}
+
+void EmulatorCPU::HandleBtr()
+{
+	uintptr_t src = GetValue(instruction.getOperand(1));
+	uintptr_t dst = GetValue(instruction.getOperand(0));
+
+	uint32_t bitPos = src & 0x1F;
+
+	// Extract the bit at bitPos and set the carry flag
+	bool carryFlag = (dst >> bitPos) & 1;
+
+	if (carryFlag)
+		SetCarryFlag();
+	else
+		ClearCarryFlag();
+
+	dst &= ~(1U << bitPos);
+
+	WriteResult(instruction.getOperand(0), dst);
+}
+
+void EmulatorCPU::HandleCqo()
+{
+	int64_t result = static_cast<int64_t>(reg_read(zasm::x86::rax));
+
+	result = result < 0 ? -1 : 0;
+
+	WriteResult(zasm::x86::rdx, result);
+}
+
+void EmulatorCPU::HandleBt()
+{
+	uintptr_t src = GetValue(instruction.getOperand(1));
+	uintptr_t dst = GetValue(instruction.getOperand(0));
+
+	uint32_t bitPos = src & 0x1F;
+
+	// Extract the bit at bitPos and set the carry flag
+	bool carryFlag = (dst >> bitPos) & 1;
+
+	if (carryFlag)
+		SetCarryFlag();
+	else
+		ClearCarryFlag();
+}
+
+void EmulatorCPU::HandleCdq()
+{
+	int32_t result = static_cast<int32_t>(reg_read(zasm::x86::eax));
+
+	result = result < 0 ? -1 : 0;
+
+	WriteResult(zasm::x86::edx, result);
+}
+
 void EmulatorCPU::SetCarryFlag()
 {
-	rFlags |= 1;
+	rFlags |= carryFlagMask;
 }
 
 void EmulatorCPU::SetParityFlag()
 {
-	rFlags |= 4;
+	rFlags |= parityFlagMask;
 }
 
 void EmulatorCPU::SetAuxiliaryCarryFlag()
 {
-	rFlags |= 0x10;
+	rFlags |= auxiliaryCarryFlagMask;
 }
 
 void EmulatorCPU::SetZeroFlag()
 {
-	rFlags |= 0x40;
+	rFlags |= zeroFlagMask;
 }
 
 void EmulatorCPU::SetSignFlag()
 {
-	rFlags |= 0x80;
+	rFlags |= signFlagMask;
 }
 
 void EmulatorCPU::SetOverflowFlag()
 {
-	rFlags |=  0x800;
+	rFlags |= overflowFlagMask;
 }
 
 void EmulatorCPU::ClearCarryFlag()
@@ -1597,7 +1727,6 @@ uintptr_t EmulatorCPU::mem_read(uintptr_t address,void* bytes ,uintptr_t size)
 	}
 
 	if (!mr) {
-		PrintRegisters();
 		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
 	}
 	
@@ -1871,7 +2000,7 @@ void EmulatorCPU::update_eflags(uintptr_t dst,uintptr_t dst_old,uintptr_t src1,
 	ZF = 0, PF= 0, AF= 0, OF = 0, CF = 0, SF = 0;
 }
 #define REG #REG
-void EmulatorCPU::PrintRegisters()
+/*void EmulatorCPU::PrintRegisters()
 {
 	std::string res = std::format("RAX :0x{:x}  ", regs[RAX]);
 	res += std::format("RBX :0x{:x}  ", regs[RBX]);
@@ -1894,7 +2023,7 @@ void EmulatorCPU::PrintRegisters()
 	logger->log(res);
 	//printf("%s", res.c_str());
 
-}
+}*/
 
 void EmulatorCPU::run(uintptr_t rva)
 {
@@ -1928,6 +2057,9 @@ void EmulatorCPU::run(uintptr_t rva)
 			break;
 		case zasm::x86::Mnemonic::Mov:
 			HandleMov();
+			break;
+		case zasm::x86::Mnemonic::Cdqe:
+			HandleCdqe();
 			break;
 		case zasm::x86::Mnemonic::Call:
 			HandleCall();
@@ -1977,6 +2109,24 @@ void EmulatorCPU::run(uintptr_t rva)
 		case zasm::x86::Mnemonic::Rol:
 			HandleRol();
 			break;
+		case zasm::x86::Mnemonic::Cbw:
+			HandleCbw();
+			break;
+		case zasm::x86::Mnemonic::Btc:
+			HandleBtc();
+			break;
+		case zasm::x86::Mnemonic::Bts:
+			HandleBts();
+			break;
+		case zasm::x86::Mnemonic::Btr:
+			HandleBtr();
+			break;
+		case zasm::x86::Mnemonic::Cwde:
+			HandleCwde();
+			break;
+		case zasm::x86::Mnemonic::Cwd:
+			HandleCwd();
+			break;
 		case zasm::x86::Mnemonic::Add:
 			HandleAdd();
 			break;
@@ -1987,6 +2137,12 @@ void EmulatorCPU::run(uintptr_t rva)
 			break;
 		case zasm::x86::Mnemonic::Adc:
 			HandleAdc();
+			break;
+		case zasm::x86::Mnemonic::Cdq:
+			HandleCdq();
+			break;
+		case zasm::x86::Mnemonic::Bt:
+			HandleBt();
 			break;
 		case zasm::x86::Mnemonic::Setnl:
 			HandleSetge();
@@ -2090,6 +2246,9 @@ void EmulatorCPU::run(uintptr_t rva)
 			break;
 		case zasm::x86::Mnemonic::Movsb:
 			HandleMovsb();
+			break;
+		case zasm::x86::Mnemonic::Cqo:
+			HandleCqo();
 			break;
 		case zasm::x86::Mnemonic::Setns:
 			HandleSetns();

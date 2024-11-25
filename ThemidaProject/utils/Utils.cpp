@@ -4,13 +4,22 @@
 #include <fstream>
 #include <zasm/formatter/formatter.hpp>
 
-
-#include "../emulator/emu.h"
-#include "Logger.h"
 #include "../Operands/BaseOperand.h"
 #include "../Operands/MemoryOperand.h"
 #include "../Operands/RegisterOperand.h"
+#include "../Operands/FlagsOperand.h"
 #include "../Operands/ConstantOperand.h"
+
+#include "../ByteOperand/OperandUnit.h"
+#include "../ByteOperand/MemoryByte.h"
+#include "../ByteOperand/RegisterByte.h"
+#include "../ByteOperand/FlagBit.h"
+
+#include "../Instruction/Instruction.h"
+
+#include "../emulator/emu.h"
+#include "Logger.h"
+
 
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin)
 {
@@ -63,61 +72,6 @@ void printInstruction(const zasm::InstructionDetail& instruction) {
 	printf("%s\n", formatInstruction(instruction).c_str());
 }
 
-std::string actionToString(const zasm::detail::OperandAccess& actionType) {
-	
-	switch (actionType) {
-	case zasm::detail::OperandAccess::Read:
-		return "Read";
-	case  zasm::detail::OperandAccess::Write:
-		return "Write";
-	case  zasm::detail::OperandAccess::CondRead:
-		return "CondRead";
-	case  zasm::detail::OperandAccess::CondWrite:
-		return "CondWrite";
-	case  zasm::detail::OperandAccess::ReadWrite:
-		return "ReadWrite";
-	case  zasm::detail::OperandAccess::CondReadCondWrite:
-		return "CondReadCondWrite";
-	case  zasm::detail::OperandAccess::ReadCondWrite:
-		return "ReadCondWrite";
-	case  zasm::detail::OperandAccess::CondReadWrite:
-		return "CondReadWrite";
-	default:
-		throw std::runtime_error("Error during access to string function");
-		break;
-	}
-}
-
-std::string myActionToString(const OperandAction action) {
-
-	switch (action)
-	{
-	case OperandAction::READ:
-		return "READ";
-	case OperandAction::WRITE:
-		return "WRITE";
-	case OperandAction::READWRITE:
-		return "READWRITE";
-	default:
-		break;
-	}
-}
-
-OperandAction zasmActionToOwn(const zasm::detail::OperandAccess& actionType)
-{
-	switch (actionType)
-	{
-	case zasm::detail::OperandAccess::Read:
-		return OperandAction::READ;
-	case zasm::detail::OperandAccess::Write:
-		return OperandAction::WRITE;
-	case zasm::detail::OperandAccess::ReadWrite:
-		return OperandAction::READWRITE;
-	default:
- 		throw std::runtime_error("Failed to zasmActionToOwn.Unknown type");
-		break;
-	}
-}
 
 std::string formatBytes(const zasm::InstructionDetail& instruction,uintptr_t address) {
 	std::string pr;
@@ -126,172 +80,6 @@ std::string formatBytes(const zasm::InstructionDetail& instruction,uintptr_t add
 		pr += std::format("{:x} ", *(BYTE*)(address + i));
 	}
 	return pr;
-}
-
-std::string FormatOperandUses(BaseOperand* op) {
-	const auto& useList = op->getUseList();
-
-	std::string result = std::format("USES: ");
-
-	if (useList.empty())
-		return result + "NONE ";
-
-	for (auto& use : useList) {
-		result += std::format("{:d} ", use->getParent()->getCount());
-	}
-	return result;
-}
-
-std::string formatRelations(BaseOperand* op) {
-
-	std::string logMessage;
-	if (op->getOperandAccess() == OperandAction::WRITE ||
-		op->getOperandAccess() == OperandAction::READWRITE) {
-		logMessage += FormatOperandUses(op);
-		if (!op->getNext())
-			logMessage += "NEXT WRITE: NONE ";
-		else {
-			logMessage += std::format(" NEXT WRITE: {:d} ",
-			op->getNext()->getParent()->getCount());
-			
-		}
-
-		if (!op->getPrev())
-			logMessage += "PREV WRITE: NONE ";
-		else {
-			logMessage += std::format(" PREV WRITE: {:d} ",
-				op->getPrev()->getParent()->getCount());
-		}
-	}
-	else if (op->getOperandAccess() == OperandAction::READ ||
-		op->getOperandAccess() == OperandAction::READWRITE) {
-		if (!op->getPrev())
-			logMessage += "ORIGIN: NONE ";
-		else {
-			logMessage += std::format("ORIGIN : {:d} ",
-				op->getPrev()->getParent()->getCount());
-		}
-	}
-	return logMessage;
-}
-std::string formatRegisterOperand(RegisterOperand* registerOpernad) {
-	std::string logMessage  = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
-	logMessage += std::format("  {} :", myActionToString(registerOpernad->getOperandAccess()));
-
-	logMessage += formatRelations(registerOpernad) + "\n";
-
-	return logMessage;
-}
-
-std::string formatMemoryOp(MemoryOperand* memoryOp) {
-
-	std::string logMessage;
-	const auto& zasmInstruction = memoryOp->getParent()->getZasmInstruction();
-	std::string action = myActionToString(memoryOp->getOperandAccess());
-	logMessage = std::format("{} :   [ 0x{:x} ]   ", action, memoryOp->getMemoryAddress());
-
-	logMessage += formatRelations(memoryOp) + "\n";
-
-	 logMessage += "BASE " + formatRegisterOperand(memoryOp->getBase())
-		+ "INDEX " + formatRegisterOperand(memoryOp->getIndex());
-
-	 
-
-	 return logMessage;
-}
-
-std::string formateOperand(BaseOperand* op) {
-	
-	MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
-
-
-	ConstantOperand* constantOperand = dynamic_cast<ConstantOperand*>(op);
-	std::string logMessage;
-	if (constantOperand) {
-		 logMessage = std::format("CONST ");
-		return logMessage;
-	}
-
-	if (memoryOperand) {
-		return formatMemoryOp(memoryOperand);
-	}
-
-	RegisterOperand* registerOpernad = dynamic_cast<RegisterOperand*>(op);
-
-	if (registerOpernad) {
-		return formatRegisterOperand(registerOpernad);
-	}
-	
-}
-std::string formateLinkOneInstruction(Instruction* instruction) {
-	std::string res = std::format("{:d} | ", instruction->getCount())
-		+ formatInstruction(instruction->getZasmInstruction()) + "\n";
-
-
-	const auto& Operands = instruction->getOperands();
-
-	for (int i = 0; i < Operands.size(); i++) {
-		res += std::format("OP:{:d} ", i) + formateOperand(Operands[i]) + "\n";
-
-	}
-
-	return res;
-}
-void formateLinkedInstructions(Instruction* instruction)
-{
-	for (Instruction* currentInstruction = instruction;
-		currentInstruction != nullptr; currentInstruction = currentInstruction->getNext()) {
-
-		std::string res = formateLinkOneInstruction(currentInstruction);
-
-		//printf("%s\n\n", res.c_str());
-		logger->log(res + "\n");
-	}
-
-}
-
-
-std::string EmulatorCPU::formatMemoryOperand(const zasm::Operand& op,uintptr_t i) {
-
-	uintptr_t address = CalcEffectiveMemAddress(op, i);
-
-	std::string action = actionToString(instruction.getOperandAccess(i));
-	std::string logMessage = std::format("{} :   [ 0x{:x} ] =  ", action, address);
-
-	if (instruction.getMnemonic() != zasm::x86::Mnemonic::Lea) {
-		uintptr_t value;
-		mem_read(address, &value,
-			zasmBitsToNumericSize(instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64)));
-		logMessage += std::format("0x{:x}\n", value);
-	}
-
-	return logMessage;
-}
-void EmulatorCPU::LogInstruction(const zasm::InstructionDetail& instruction, uintptr_t address)
-{
-
-
-	auto string1 = std::format("{:x} ! ",count);
-	logger->log(string1);
-
-	logger->log(formatBytes(instruction,address));
-		
-	std::string string = std::format("|  {}\n",formatInstruction(instruction).c_str());
-	logger->log(string);
-
-	for (int i = 0; i < instruction.getOperandCount(); i++)
-	{
-		const auto& op = instruction.getOperand(i);
-
-		if (op.holds<zasm::Mem>())
-		{
-			logger->log(formatMemoryOperand(op,i));
-		}
-	}
-	
-
-	PrintRegisters();
-	
 }
 
 BYTE GetSignBit(uintptr_t value, zasm::BitSize mm)
@@ -393,5 +181,199 @@ uintptr_t zasmBitsToNumericSize(zasm::BitSize bs)
 	}
 }
 
+OperandAction zasmActionToOwn(const zasm::detail::OperandAccess& actionType)
+{
+	switch (actionType)
+	{
+	case zasm::detail::OperandAccess::Read:
+	case zasm::detail::OperandAccess::None:
+		return OperandAction::READ;
+	case zasm::detail::OperandAccess::Write:
+		return OperandAction::WRITE;
+	case zasm::detail::OperandAccess::ReadWrite:
+		return OperandAction::READWRITE;
+	default:
+		throw std::runtime_error("Failed to zasmActionToOwn.Unknown type");
+		break;
+	}
+}
+
+std::string FormatOperandUnitUses(OperandUnit* operandUnit) {
+	const auto& useList = operandUnit->getUseList();
+
+	std::string result = std::format("USES: ");
+
+	if (useList.empty())
+		return result + "NONE ";
+
+	for (auto& use : useList) {
+		result += std::format("{:d} ", use->getParent()->getParent()->getCount());
+	}
+	return result;
+}
+
+std::string formatRelations(OperandUnit* operandUnit) {
+	std::string logMessage;
+	
+	BaseOperand* parentOperand = operandUnit->getParent();
+
+	if (parentOperand->getOperandAccess() == OperandAction::READWRITE ||
+		parentOperand->getOperandAccess() == OperandAction::WRITE) {
+		
+		if (operandUnit->getNext()) {
+			logMessage += std::format("NEXT WRITE: {:d} ",
+				operandUnit->getNext()->getParent()->getParent()->getCount());
+		}
+		else {
+			logMessage += "NEXT WRITE: NONE ";
+		}
+
+		if (operandUnit->getPrev()) {
+			logMessage += std::format("PREV WRITE: {:d} ",
+				operandUnit->getPrev()->getParent()->getParent()->getCount());
+		}
+		else {
+			logMessage += "PREV WRITE: NONE ";
+		}
+
+		logMessage += FormatOperandUnitUses(operandUnit);
+	}
+	else {
+		if (operandUnit->getPrev()) {
+			logMessage += std::format("ORIGIN: {:d} ",
+				operandUnit->getPrev()->getParent()->getParent()->getCount());
+		}
+		else {
+			logMessage += "ORIGIN : NONE ";
+		}
+	}
+
+	return logMessage;
+}
+std::string formatRegisterOperand(RegisterOperand* registerOpernad) {
+	std::string logMessage = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
+	logMessage += std::format("  {} :\n", myActionToString(registerOpernad->getOperandAccess()));
+
+	for (auto& registerByte : registerOpernad->getRegisterBytes()) {
+		logMessage += std::format("[{:d}] : {} \n", registerByte->getIndex(),
+			formatRelations(registerByte));
+	}
+
+	return logMessage;
+}
+
+std::string formatMemoryOp(MemoryOperand* memoryOp) {
+	std::string logMessage;
+
+	if (memoryOp->getBase()->getZasmOperand().get<zasm::Reg>().getId() != zasm::Reg::Id::None)
+		logMessage += "BASE: " + formatRegisterOperand(memoryOp->getBase());
+	if(memoryOp->getIndex()->getZasmOperand().get<zasm::Reg>().getId() != zasm::Reg::Id::None)
+		logMessage += "INDEX: " + formatRegisterOperand(memoryOp->getIndex());
+
+	const auto& zasmInstruction = memoryOp->getParent()->getZasmInstruction();
+	std::string action = myActionToString(memoryOp->getOperandAccess());
+	logMessage += std::format("{} \n", action, memoryOp->getMemoryAddress());
+
+	const int32_t opSize = memoryOp->getZasmOperand().get<zasm::Mem>().getByteSize();
+	
+	for (auto& memoryByte : memoryOp->getMemoryBytes()) {
+		logMessage += std::format("[ 0x{:x} ] : {} \n",memoryByte->getMemoryAddress(), 
+			formatRelations(memoryByte));
+	}
+
+	return logMessage;
+}
+
+std::string formatFlagsOperand(FlagsOperand* flagOperand) {
+	
+	std::string res;
+	
+	for (auto& flag : flagOperand->getFlagBits()) {
+		res += std::format("{} : {} \n", formatFlagMask(flag->getFlagMask()) ,
+			formatRelations(flag));
+	}
+
+	return res;
+}
+
+std::string formateOperand(BaseOperand* op) {
 
 
+	ConstantOperand* constantOperand = dynamic_cast<ConstantOperand*>(op);
+	std::string logMessage;
+	if (constantOperand) {
+		logMessage = std::format("CONST ");
+		return logMessage;
+	}
+
+	MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(op);
+
+	if (memoryOperand) {
+		return formatMemoryOp(memoryOperand);
+	}
+
+	RegisterOperand* registerOpernad = dynamic_cast<RegisterOperand*>(op);
+
+	if (registerOpernad) {
+		return formatRegisterOperand(registerOpernad);
+	}
+
+	FlagsOperand* flagOperand = dynamic_cast<FlagsOperand*>(op);
+
+	if (flagOperand) {
+		return formatFlagsOperand(flagOperand);
+	}
+}
+
+std::string formatInstruction(Instruction* instruction) {
+	std::string res = std::format("{:d} | ", instruction->getCount())
+		+ formatInstruction(instruction->getZasmInstruction()) + "\n";
+
+
+	const auto& Operands = instruction->getOperands();
+
+	for (int i = 0; i < Operands.size(); i++) {
+		res += std::format("OP:{:d} ", i) + formateOperand(Operands[i]) + "\n";
+
+	}
+
+	return res;
+}
+
+
+std::string myActionToString(const OperandAction action) {
+
+	switch (action)
+	{
+	case OperandAction::READ:
+		return "READ";
+	case OperandAction::WRITE:
+		return "WRITE";
+	case OperandAction::READWRITE:
+		return "READWRITE";
+	default:
+		break;
+	}
+}
+
+std::string formatFlagMask(WORD mask)
+{
+	switch (mask)
+	{
+	case carryFlagMask:
+		return "CF";
+	case parityFlagMask:
+		return "PF";
+	case auxiliaryCarryFlagMask:
+		return "AF";
+	case zeroFlagMask:
+		return "ZF";
+	case signFlagMask:
+		return "SF";
+	case overflowFlagMask:
+		return "OF";
+	default:
+		throw std::runtime_error("Error during formatting flag mask");
+		break;
+	}
+}

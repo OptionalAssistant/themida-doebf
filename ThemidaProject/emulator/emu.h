@@ -110,6 +110,16 @@ private:
 	void HandleCmovle();
 	void HandleCmovnle();
 	void HandleCmovo();
+	void HandleCdqe();
+	void HandleCbw();
+	void HandleCwde();
+	void HandleCwd();
+	void HandleBtc();
+	void HandleBts();
+	void HandleBtr();
+	void HandleCqo();
+	void HandleBt();
+	void HandleCdq();
 
 	void SetCarryFlag();
 	void SetParityFlag();
@@ -155,10 +165,9 @@ private:
 
 
 
-	std::string formatMemoryOperand(const zasm::Operand& op, uintptr_t i);
 	void update_eflags(uintptr_t dst,uintptr_t dst_old, uintptr_t src1, uintptr_t src2,
 		zasm::BitSize bs, BinaryOp op);
-	void PrintRegisters();
+	//void PrintRegisters();
 public:
 	enum Registers {
 		RAX,
@@ -185,7 +194,6 @@ public:
 	void run(uintptr_t eip);
 
 	EmulatorCPU();
-	void LogInstruction(const zasm::InstructionDetail& instruction, uintptr_t address);
 	void reg_write( zasm::Reg reg,uintptr_t value);
 
 	uintptr_t reg_read( zasm::Reg reg);

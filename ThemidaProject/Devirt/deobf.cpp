@@ -5,35 +5,40 @@
 
 #include "deobf.h"
 #include "../emulator/emu.h"
-#include "../Linker/Linker.h"
 #include "../utils/Utils.h"
 #include "../Instruction/Instruction.h"
 #include "../utils/Logger.h"
 
+#include "../callbacks/callbacks.h"
 
 void deobf::run(uintptr_t rva)
 {
-	UserData userData;
+	UserData* userData = new UserData();
 	
-	m_cpu->addCallback(traceCallback, &userData);
+	m_cpu->addCallback(traceCallback, userData);
 
-	m_cpu->run(rva);
+	m_cpu->run(0x1000);
 
-	for (Instruction* current = userData.head; current != nullptr; current = current->getNext()) {
-		current->LinkInstruction();
+
+	for (Instruction* currentInstruction = userData->head;
+		currentInstruction != nullptr;
+		currentInstruction = currentInstruction->getNext()) {
+		printf("Current instruction: %s\n", formatInstruction(currentInstruction).c_str());
+		currentInstruction->LinkInstruction();
 	}
 
-	formateLinkedInstructions(userData.head);
-	
+
+	for (Instruction* currentInstruction = userData->head;
+		currentInstruction != nullptr;
+		currentInstruction = currentInstruction->getNext()) {
+		logger->log(formatInstruction(currentInstruction) + "\n");
+	}
+
 	bool isContinue;
 	do
 	{
-	  isContinue = optimizer->run(userData.head);
+		isContinue = optimizer->run(userData->head);
 
 	} while (isContinue);
-
-	logger->log("After\n");
-
-	formateLinkedInstructions(userData.head);
 
 }
