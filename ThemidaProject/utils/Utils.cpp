@@ -254,7 +254,9 @@ std::string formatRegisterOperand(RegisterOperand* registerOpernad) {
 	std::string logMessage = formatZasmRegisterOperand(registerOpernad->getZasmOperand().get<zasm::Reg>());
 	logMessage += std::format("  {} :\n", myActionToString(registerOpernad->getOperandAccess()));
 
-	for (auto& registerByte : registerOpernad->getRegisterBytes()) {
+	for (auto& operandUnit : registerOpernad->getOperandUnits()) {
+		RegisterByte* registerByte = dynamic_cast<RegisterByte*>(operandUnit);
+		
 		logMessage += std::format("[{:d}] : {} \n", registerByte->getIndex(),
 			formatRelations(registerByte));
 	}
@@ -276,7 +278,9 @@ std::string formatMemoryOp(MemoryOperand* memoryOp) {
 
 	const int32_t opSize = memoryOp->getZasmOperand().get<zasm::Mem>().getByteSize();
 	
-	for (auto& memoryByte : memoryOp->getMemoryBytes()) {
+	for (auto& operandUnit : memoryOp->getOperandUnits()) {
+		MemoryByte* memoryByte = dynamic_cast<MemoryByte*>(operandUnit);
+
 		logMessage += std::format("[ 0x{:x} ] : {} \n",memoryByte->getMemoryAddress(), 
 			formatRelations(memoryByte));
 	}
@@ -288,7 +292,8 @@ std::string formatFlagsOperand(FlagsOperand* flagOperand) {
 	
 	std::string res;
 	
-	for (auto& flag : flagOperand->getFlagBits()) {
+	for (auto& operandUnit : flagOperand->getOperandUnits()) {
+		FlagBit* flag = dynamic_cast<FlagBit*>(operandUnit);
 		res += std::format("{} : {} \n", formatFlagMask(flag->getFlagMask()) ,
 			formatRelations(flag));
 	}
@@ -376,4 +381,13 @@ std::string formatFlagMask(WORD mask)
 		throw std::runtime_error("Error during formatting flag mask");
 		break;
 	}
+}
+
+void printLinkedInstruction(Instruction* instruction){
+	for (Instruction* currentInstruction = instruction;
+		currentInstruction != nullptr;
+		currentInstruction = currentInstruction->getNext()) {
+		logger->log(formatInstruction(currentInstruction) + "\n");
+	}
+
 }

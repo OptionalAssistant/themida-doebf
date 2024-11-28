@@ -23,16 +23,11 @@ void deobf::run(uintptr_t rva)
 	for (Instruction* currentInstruction = userData->head;
 		currentInstruction != nullptr;
 		currentInstruction = currentInstruction->getNext()) {
-		printf("Current instruction: %s\n", formatInstruction(currentInstruction).c_str());
 		currentInstruction->LinkInstruction();
 	}
 
 
-	for (Instruction* currentInstruction = userData->head;
-		currentInstruction != nullptr;
-		currentInstruction = currentInstruction->getNext()) {
-		logger->log(formatInstruction(currentInstruction) + "\n");
-	}
+	printLinkedInstruction(userData->head);
 
 	bool isContinue;
 	do
@@ -40,5 +35,8 @@ void deobf::run(uintptr_t rva)
 		isContinue = optimizer->run(userData->head);
 
 	} while (isContinue);
+
+	logger->log("After\n");
+	printLinkedInstruction(userData->head);
 
 }

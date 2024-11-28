@@ -45,3 +45,9 @@ std::string myActionToString(const OperandAction action);
 
 std::string formatInstruction(Instruction* instruction);
 std::string formatFlagMask(WORD mask);
+
+
+void printLinkedInstruction(Instruction* instruction);
+
+
+inline  uintptr_t countGlobal = 0;

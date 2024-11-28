@@ -14,7 +14,14 @@ void RegisterOperand::Link()
 	if (!prev || this->getZasmOperand().get<zasm::Reg>().getId() == zasm::Reg::Id::None)
 		return;
 
-	std::vector<RegisterByte*> registerBytes = this->getRegisterBytes();
+
+	if (this->getParent()->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Pop &&
+		this->getParent()->getOperand(0)->getZasmOperand().holds<zasm::Reg>() &&
+		this->getParent()->getOperand(0)->getZasmOperand().get<zasm::Reg>() == zasm::x86::rsp) {
+		return;
+	}
+
+	std::vector<OperandUnit*> registerBytes = this->getOperandUnits();
 	do
 	{
 		for (auto& op : prev->getOperands()) {
@@ -30,18 +37,19 @@ void RegisterOperand::Link()
 
 			if (opAccess == OperandAction::WRITE ||
 				opAccess == OperandAction::READWRITE) {
-				std::vector<RegisterByte*>& prevRegisterBytes = registerOperand->getRegisterBytes();
+				std::vector<OperandUnit*>& prevRegisterBytes = registerOperand->getOperandUnits();
 
 				for (auto it = registerBytes.begin(); it != registerBytes.end(); /* no increment here */) {
-					auto registerByte = *it;
+					auto registerByte = dynamic_cast<RegisterByte*>(*it);
 
 					auto foundIt = std::find_if(prevRegisterBytes.begin(), prevRegisterBytes.end(),
-						[&](RegisterByte* regByte) {
+						[&](OperandUnit* operandUnit) {
+							RegisterByte* regByte = dynamic_cast<RegisterByte*>(operandUnit);
 							return regByte->getIndex() == registerByte->getIndex();
 						});
 
 					if (foundIt != prevRegisterBytes.end()) {
-						RegisterByte* foundByteRegister = *foundIt;
+						RegisterByte* foundByteRegister = dynamic_cast<RegisterByte*>(*foundIt);
 
 						registerByte->setPrev(foundByteRegister);
 
@@ -71,25 +79,10 @@ void RegisterOperand::Link()
 }
 
 
-void RegisterOperand::Unlink()
-{
-}
-
-
 void RegisterOperand::destroy()
 {
+	Unlink();
 }
-
-std::vector<RegisterByte*>& RegisterOperand::getRegisterBytes()
-{
-	return registerBytes;
-}
-
-void RegisterOperand::setRegisterByte(std::vector<RegisterByte*>& registerBytes)
-{
-	this->registerBytes = registerBytes;
-}
-
 
 bool RegisterOperand::isSameRegister(RegisterOperand& register_)
 {

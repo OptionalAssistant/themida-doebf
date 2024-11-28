@@ -30,7 +30,7 @@ OperandUnit* OperandUnit::getNext()const
 
 OperandUnit* OperandUnit::getPrev()const
 {
-    return prev;
+    return prev;    
 }
 
 void OperandUnit::setPrev(OperandUnit* opPrev) {
@@ -102,7 +102,6 @@ void OperandUnit::transferAllUses(OperandUnit* operand)
 }
 
 void OperandUnit::makeConstant() {
-
 
 }
 

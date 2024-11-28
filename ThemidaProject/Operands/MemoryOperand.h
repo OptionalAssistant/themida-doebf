@@ -12,8 +12,6 @@ class ConstantOperand;
 class MemoryOperand : public BaseOperand
 {
 private:
-	std::vector<MemoryByte*>memoryBytes;
-	
 	RegisterOperand* base;
 	RegisterOperand* index;
 	ConstantOperand* scale;
@@ -37,8 +35,6 @@ public:
 	void setScale(ConstantOperand* op);
 	void setMemoryAddress(uintptr_t memAddress);
 	uintptr_t getMemoryAddress();
-
-	std::vector<MemoryByte*>& getMemoryBytes();
 
 	void setMemoryBytes(std::vector<MemoryByte*>& memoryBytes);
 	

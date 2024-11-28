@@ -10,9 +10,6 @@
 #include "../utils/Utils.h"
 
 
-int count = 0;
-
-
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
     void* user_data) {
 
@@ -55,12 +52,9 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
     }
 
 
-    if (count == 1000) {
+    if (countGlobal == 1000) {
         cpu->stop_emu();
     }
-
-
-    count++;
 
     return true;
 

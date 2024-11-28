@@ -3,6 +3,8 @@
 
 #include "Instruction.h"
 #include "../Operands/BaseOperand.h"
+#include "../Operands/MemoryOperand.h"
+#include "../Operands/RegisterOperand.h"
 #include "../utils/Utils.h"
 
 std::vector<BaseOperand*>& Instruction::getOperands()
@@ -87,8 +89,9 @@ Instruction* Instruction::insertAfter(Instruction* previous)
 	previous->setNext(this);
 
 
-	this->setCount(previous->getCount() + 1);
+	this->setCount(countGlobal);
 
+	++countGlobal; 
 	return this;
 }
 
@@ -105,11 +108,24 @@ Instruction* Instruction::insertBefore(Instruction* next)
 
 void Instruction::addOperand(BaseOperand* baseOperand) {
 	baseOperand->setParent(this);
+
+	MemoryOperand* memOp = dynamic_cast<MemoryOperand*>(baseOperand);
+
+	if (memOp) {
+		memOp->getBase()->setParent(this);
+		memOp->getIndex()->setParent(this);
+	}
 	operand_list.push_back(baseOperand);
 }
 
 void Instruction::deleteOperand(BaseOperand* baseOperand)
 {
+	auto foundOperand = std::find(operand_list.begin(), operand_list.end(), baseOperand);
+
+	if (foundOperand == operand_list.end())
+		throw std::runtime_error("Failed during deleteOperand.Operand NotFound");
+
+	operand_list.erase(foundOperand);
 }
 
 void Instruction::replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand)

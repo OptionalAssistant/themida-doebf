@@ -8,7 +8,6 @@ class FlagBit;
 class FlagsOperand : public BaseOperand
 {
 private:
-	std::vector<FlagBit*>flags;
 public:
 	virtual void Link() override;
 	virtual void Unlink() override;
@@ -18,9 +17,6 @@ public:
 	FlagsOperand(const zasm::Operand& operand, uintptr_t index,
 		OperandAction op_action)
 		: BaseOperand(op_action, operand, index) {}
-
-
-	std::vector<FlagBit*>& getFlagBits();
 
 	void setFlagBits(std::vector<FlagBit*>& flagBits);
 

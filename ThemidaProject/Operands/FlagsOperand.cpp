@@ -11,27 +11,28 @@ void FlagsOperand::Link()
 		return;
 
 
-	std::vector<FlagBit*> flagBites = this->getFlagBits();
+	std::vector<OperandUnit*> flagBites = this->getOperandUnits();
 	do
 	{
 		for (auto& op : prev->getOperands()) {
-			FlagsOperand* flagsOperand = dynamic_cast<FlagsOperand*> (op);
+			FlagsOperand* flagsOperand = dynamic_cast<FlagsOperand*>(op);
 
 			if (!flagsOperand)
 				continue;
 
-			std::vector<FlagBit*>& prevFlagBites = flagsOperand->getFlagBits();
+			std::vector<OperandUnit*>& prevFlagBites = flagsOperand->getOperandUnits();
 
 			for (auto it = flagBites.begin(); it != flagBites.end(); /* no increment here */) {
-					auto flagBit = *it;
+					auto flagBit = dynamic_cast<FlagBit*>(*it);
 
 					auto foundIt = std::find_if(prevFlagBites.begin(), prevFlagBites.end(),
-						[&](FlagBit* prevFlagBit) {
+						[&](OperandUnit* operandUnit) {
+							FlagBit* prevFlagBit = dynamic_cast<FlagBit*>(operandUnit);
 							return prevFlagBit->getFlagMask() == flagBit->getFlagMask();
 						});
 
 					if (foundIt != prevFlagBites.end()) {
-						FlagBit* foundBitFlag = *foundIt;
+						FlagBit* foundBitFlag = dynamic_cast<FlagBit*>(*foundIt);
 
 						flagBit->setPrev(foundBitFlag);
 
@@ -66,13 +67,4 @@ void FlagsOperand::destroy()
 {
 }
 
-std::vector<FlagBit*>& FlagsOperand::getFlagBits()
-{
-    return flags;
-}
-
-void FlagsOperand::setFlagBits(std::vector<FlagBit*>& flagBits)
-{
-    this->flags = flagBits;
-}
 

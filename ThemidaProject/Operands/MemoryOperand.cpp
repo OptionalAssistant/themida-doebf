@@ -19,7 +19,7 @@ void MemoryOperand::Link()
         return;
 
 
-	std::vector<MemoryByte*> memoryBytes = this->getMemoryBytes();
+	std::vector<OperandUnit*> memoryBytes = this->getOperandUnits();
 	do
 	{
 		for (auto& op : prev->getOperands()) {
@@ -32,18 +32,19 @@ void MemoryOperand::Link()
 
 			if (opAccess == OperandAction::WRITE ||
 				opAccess == OperandAction::READWRITE) {
-				std::vector<MemoryByte*>& prevMemoryBytes = memoryOperand->getMemoryBytes();
+				std::vector<OperandUnit*>& prevMemoryBytes = memoryOperand->getOperandUnits();
 
 				for (auto it = memoryBytes.begin(); it != memoryBytes.end(); /* no increment here */) {
-					auto memoryByte = *it;
+					auto memoryByte = dynamic_cast<MemoryByte*>(*it);
 
 					auto foundIt = std::find_if(prevMemoryBytes.begin(), prevMemoryBytes.end(),
-						[&](MemoryByte* memBytePrev) {
+						[&](OperandUnit* operandUnit) {
+							MemoryByte* memBytePrev = dynamic_cast<MemoryByte*>(operandUnit);
 							return memBytePrev->getMemoryAddress() == memoryByte->getMemoryAddress();
 						});
 
 					if (foundIt != prevMemoryBytes.end()) {
-						MemoryByte* foundByteRegister = *foundIt;
+						MemoryByte* foundByteRegister = dynamic_cast<MemoryByte*>(*foundIt);
 
 						memoryByte->setPrev(foundByteRegister);
 
@@ -75,10 +76,17 @@ void MemoryOperand::Link()
 
 void MemoryOperand::Unlink()
 {
+	if (base->getZasmOperand().get<zasm::Reg>().getId() != zasm::Reg::Id::None)
+		base->Unlink();
+	if (index->getZasmOperand().get<zasm::Reg>().getId() != zasm::Reg::Id::None)
+		index->Unlink();
+
+	BaseOperand::Unlink();
 }
 
 void MemoryOperand::destroy()
 {
+	Unlink();
 }
 
 RegisterOperand* MemoryOperand::getBase()
@@ -124,16 +132,6 @@ void MemoryOperand::setMemoryAddress(uintptr_t memAddress) {
 uintptr_t MemoryOperand::getMemoryAddress()
 {
     return memoryAddress;
-}
-
-std::vector<MemoryByte*>& MemoryOperand::getMemoryBytes()
-{
-    return memoryBytes;
-}
-
-void MemoryOperand::setMemoryBytes(std::vector<MemoryByte*>& memoryBytes)
-{
-    this->memoryBytes = memoryBytes;
 }
 
 

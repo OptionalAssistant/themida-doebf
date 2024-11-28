@@ -49,7 +49,7 @@ void createMemoryByteUnits(MemoryOperand* memoryOp) {
 
     const int32_t opSize = memoryOp->getZasmOperand().get<zasm::Mem>().getByteSize();
 
-    auto& memoryBytes = memoryOp->getMemoryBytes();
+    auto& memoryBytes = memoryOp->getOperandUnits();
 
     for (int i = 0; i < opSize; i++) {
         memoryBytes.push_back(new MemoryByte(memoryAddress + i, memoryOp));
@@ -63,7 +63,7 @@ void createRegisterByteUnits(RegisterOperand* registerOp) {
 
    const zasm::Reg registerValue = registerOp->getZasmOperand().get<zasm::Reg>();
 
-    auto& registerBytes = registerOp->getRegisterBytes();
+    auto& registerBytes = registerOp->getOperandUnits();
 
     if (registerValue.isGp8Lo()) {
         registerBytes.push_back(new RegisterByte(0, registerOp));
@@ -92,7 +92,7 @@ void createRegisterByteUnits(RegisterOperand* registerOp) {
 void createFlagsBitUnits(FlagsOperand* flagsOp) {
     const auto& cpuFlags = flagsOp->getParent()->getZasmInstruction().getCPUFlags();
 
-    auto& flagBits = flagsOp->getFlagBits();
+    auto& flagBits = flagsOp->getOperandUnits();
 
     if (flagsOp->getParent()->getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Pushfq) {
         for (auto& flag : flagMasks) {
