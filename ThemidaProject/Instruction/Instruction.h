@@ -1,47 +1,61 @@
 #pragma once
 #include <vector>
-
+#include <Windows.h>
 #include <zasm/zasm.hpp>
+#include "../utils/types.h"
 
-class BaseOperand;
+class Operand {
+private:
+	zasm::Operand operand;
+public:
+	void setOperand(const zasm::Operand& op);
+	zasm::Operand getZasmOperand();
+
+	Operand(const zasm::Operand& op) : operand(op) {}
+
+};
+
+class MemoryOperand : public Operand {
+	uintptr_t memoryAddress;
+public:
+	uintptr_t getMemoryAddress();
+	void setMemoryAddress(uintptr_t memAddress);
+
+	MemoryOperand(const zasm::Operand& op, uintptr_t memAddress = 0) 
+		: Operand(op), memoryAddress(memAddress) {}
+
+};
 
 class Instruction
 {
 private:
-	std::vector<BaseOperand*>operand_list;
-	Instruction* prev;
-	Instruction* next;
 	zasm::InstructionDetail instruction;
+	std::vector<OperandVariant>operands;
 	uintptr_t count;
+	uintptr_t address;
+	std::array<uintptr_t, 17> registerValues;
+	WORD rFlags;
 public:
-	std::vector<BaseOperand*>& getOperands();
-	BaseOperand* getOperand(uintptr_t index);
-	void Unlink();
-	void DeleteFromList();
-	void Delete();
-
-	Instruction* getNext()const;
-	Instruction* getPrev()const;
-
-	Instruction(zasm::InstructionDetail instruction) : prev(nullptr), next(nullptr),
-		instruction(instruction), count(0) {}
-
-	uintptr_t getCount();
 	void setCount(uintptr_t count);
+	uintptr_t getCount();
+	void setAddress(uintptr_t address);
+	uintptr_t getAddress();
 
-	void LinkInstruction();
+	void addOperand(const OperandVariant& op);
 
-	void setPrev(Instruction* instruction);
-	void setNext(Instruction* instruction);
+	std::vector<OperandVariant>& getOperands();
 
-	Instruction* insertAfter(Instruction* instruction);
-	Instruction* insertBefore(Instruction* instruction);
+	zasm::InstructionDetail& getZasmInstruction();
+	void setZasmInstruction(zasm::InstructionDetail& instruction);
 
-	void addOperand(BaseOperand* baseOperand);
-	void deleteOperand(BaseOperand* baseOperand);
+	OperandVariant& getOperand(uintptr_t index);
 
-	void replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand);
+	void setOperand(uintptr_t index, const OperandVariant& op);
 
+	std::array<uintptr_t, 17>& getRegistersArray();
+	void setRegisterValues(std::array<uintptr_t, 17> registers);
 
-	zasm::InstructionDetail getZasmInstruction();
+	WORD& getRflags();
+	void setRFlags(WORD flags);
 };
+

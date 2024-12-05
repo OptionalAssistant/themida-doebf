@@ -2331,197 +2331,17 @@ EmulatorCPU::EmulatorCPU()
 
 void EmulatorCPU::reg_write(zasm::Reg reg,uintptr_t value)
 {
-
-		if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_FLAGS)
-		{
-			rFlags = value;
-			return;
-		}
-		if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_GS) {
-			uintptr_t*  reg = &regs[Registers::GS];
-			*reg = value;
-			return;
-		}
-	auto gpRegister = reg.as<zasm::x86::Gp>().r64();
-
-	const auto zy_reg = (ZydisRegister_)gpRegister.getId();
-
-	uintptr_t* wreg = nullptr;
-	switch (zy_reg)
-	{
-	case ZYDIS_REGISTER_RAX:
-		wreg = &regs[Registers::RAX];
-		break;
-	case ZYDIS_REGISTER_RBX:
-		wreg = &regs[Registers::RBX];
-		break;
-	case ZYDIS_REGISTER_RCX:
-		wreg = &regs[Registers::RCX];
-		break;
-	case ZYDIS_REGISTER_RDX:
-		wreg = &regs[Registers::RDX];
-		break;
-	case ZYDIS_REGISTER_RBP:
-		wreg = &regs[Registers::RBP];
-		break;
-	case ZYDIS_REGISTER_RSP:
-		wreg = &regs[Registers::RSP];
-		break;
-	case ZYDIS_REGISTER_RSI:
-		wreg = &regs[Registers::RSI];
-		break;
-	case ZYDIS_REGISTER_RDI:
-		wreg = &regs[Registers::RDI];
-		break;
-	case ZYDIS_REGISTER_R8:
-		wreg = &regs[Registers::R8];
-		break;
-	case ZYDIS_REGISTER_R9:
-		wreg = &regs[Registers::R9];
-		break;
-	case ZYDIS_REGISTER_R10:
-		wreg = &regs[Registers::R10];
-		break;
-	case ZYDIS_REGISTER_R11:
-		wreg = &regs[Registers::R11];
-		break;
-	case ZYDIS_REGISTER_R12:
-		wreg = &regs[Registers::R12];
-		break;
-	case ZYDIS_REGISTER_R13:
-		wreg = &regs[Registers::R13];
-		break;
-	case ZYDIS_REGISTER_R14:
-		wreg = &regs[Registers::R14];
-		break;
-	case ZYDIS_REGISTER_R15:
-		wreg = &regs[Registers::R15];
-		break;
-	default:
-		printf("unknown register reg_write\n");
-		exit(0);
-		break;
-	}
-
-	if (reg.isGp8Lo())
-	{
-
-		*wreg = (*wreg & 0xFFFFFFFFFFFFFF00) | (value & 0xFF);
-	}
-	else if (reg.isGp8Hi())
-	{
-
-		*wreg = (*wreg & 0xFFFFFFFFFFFF00FF) | ((value << 8) & 0xFF00);
-	}
-	else if (reg.isGp16())
-	{
-
-		*wreg = (*wreg & 0xFFFFFFFFFFFF0000) | (value & 0x000000000000FFFF);
-	}
-	else if (reg.isGp32())
-	{
-
-		*wreg = value & 0x00000000FFFFFFFF;
-	}
-	else {
-
-		*wreg = value;
-	}
+	reg_write_(regs, reg, value,rFlags);
 }
 
 uintptr_t EmulatorCPU::reg_read( zasm::Reg reg)
 {
-		if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_FLAGS)
-		{
-			return rFlags;
-		}
-		if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_GS) {
-			uintptr_t reg = regs[Registers::GS];
-			return reg;
-		}
+	return reg_read_(regs, reg,rFlags);
+}
 
-	const auto gpRegister = reg.as<zasm::x86::Gp>().r64();
-
-	const auto zy_reg = (ZydisRegister_)gpRegister.getId();
-
-	uintptr_t wreg;
-	switch (zy_reg)
-	{
-	case ZYDIS_REGISTER_RAX:
-		wreg = regs[Registers::RAX];
-		break;
-	case ZYDIS_REGISTER_RBX:
-		wreg = regs[Registers::RBX];
-		break;
-	case ZYDIS_REGISTER_RCX:
-		wreg = regs[Registers::RCX];
-		break;
-	case ZYDIS_REGISTER_RDX:
-		wreg = regs[Registers::RDX];
-		break;
-	case ZYDIS_REGISTER_RBP:
-		wreg = regs[Registers::RBP];
-		break;
-	case ZYDIS_REGISTER_RSP:
-		wreg = regs[Registers::RSP];
-		break;
-	case ZYDIS_REGISTER_RSI:
-		wreg = regs[Registers::RSI];
-		break;
-	case ZYDIS_REGISTER_RDI:
-		wreg = regs[Registers::RDI];
-		break;
-	case ZYDIS_REGISTER_R8:
-		wreg = regs[Registers::R8];
-		break;
-	case ZYDIS_REGISTER_R9:
-		wreg = regs[Registers::R9];
-		break;
-	case ZYDIS_REGISTER_R10:
-		wreg = regs[Registers::R10];
-		break;
-	case ZYDIS_REGISTER_R11:
-		wreg = regs[Registers::R11];
-		break;
-	case ZYDIS_REGISTER_R12:
-		wreg = regs[Registers::R12];
-		break;
-	case ZYDIS_REGISTER_R13:
-		wreg = regs[Registers::R13];
-		break;
-	case ZYDIS_REGISTER_R14:
-		wreg = regs[Registers::R14];
-		break;
-	case ZYDIS_REGISTER_R15:
-		wreg = regs[Registers::R15];
-		break;
-	default:
-		printf("unknown register reg_read\n");
-		exit(0);
-		break;
-	}
-
-	if (reg.isGp8Lo())
-	{
-		return wreg & 0xFF;
-	}
-	else if (reg.isGp8Hi())
-	{
-		return (wreg & 0xFF00) >> 8;
-	}
-	else if (reg.isGp16())
-	{
-		return wreg & 0xFFFF;
-	}
-	else if (reg.isGp32())
-	{
-
-		return wreg & 0x00000000FFFFFFFF;
-	}
-	else {
-
-		return wreg;
-	}
+std::array<uintptr_t, 17> EmulatorCPU::getRegistersValues()
+{
+	return regs;
 }
 
 void EmulatorCPU::addCallback(callbackFunction callback,void* userData)
@@ -2574,9 +2394,88 @@ bool EmulatorCPU::mem_unmap(uintptr_t address)
 	throw std::runtime_error("Error!There is no memory region mapped in this range");
 }
 
+uintptr_t reg_read_(std::array<uintptr_t, 17>& regs, zasm::Reg reg, WORD rFlags)
+{
+	if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_FLAGS)
+	{
+		return rFlags;
+	}
+	if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_GS) {
+		uintptr_t reg = regs[EmulatorCPU::Registers::GS];
+		return reg;
+	}
 
+	const auto gpRegister = reg.as<zasm::x86::Gp>().r64();
 
+	const auto zy_reg = (ZydisRegister_)gpRegister.getId();
 
+	uintptr_t wreg;
+	wreg = regs[zasmToEmulatorRegister(zy_reg)];
 
+	if (reg.isGp8Lo())
+	{
+		return wreg & 0xFF;
+	}
+	else if (reg.isGp8Hi())
+	{
+		return (wreg & 0xFF00) >> 8;
+	}
+	else if (reg.isGp16())
+	{
+		return wreg & 0xFFFF;
+	}
+	else if (reg.isGp32())
+	{
 
+		return wreg & 0x00000000FFFFFFFF;
+	}
+	else {
 
+		return wreg;
+	}
+}
+
+void reg_write_(std::array<uintptr_t, 17>& regs, zasm::Reg reg, uintptr_t value,WORD& rFlags)
+{
+
+	if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_FLAGS)
+	{
+		rFlags = value;
+		return;
+	}
+	if (reg.getId() == (zasm::Reg::Id)ZYDIS_REGISTER_GS) {
+		uintptr_t* reg = &regs[EmulatorCPU::Registers::GS];
+		*reg = value;
+		return;
+	}
+	auto gpRegister = reg.as<zasm::x86::Gp>().r64();
+
+	const auto zy_reg = (ZydisRegister_)gpRegister.getId();
+
+	uintptr_t* wreg = &regs[zasmToEmulatorRegister(zy_reg)];
+
+	if (reg.isGp8Lo())
+	{
+
+		*wreg = (*wreg & 0xFFFFFFFFFFFFFF00) | (value & 0xFF);
+	}
+	else if (reg.isGp8Hi())
+	{
+
+		*wreg = (*wreg & 0xFFFFFFFFFFFF00FF) | ((value << 8) & 0xFF00);
+	}
+	else if (reg.isGp16())
+	{
+
+		*wreg = (*wreg & 0xFFFFFFFFFFFF0000) | (value & 0x000000000000FFFF);
+	}
+	else if (reg.isGp32())
+	{
+
+		*wreg = value & 0x00000000FFFFFFFF;
+	}
+	else {
+
+		*wreg = value;
+	}
+}

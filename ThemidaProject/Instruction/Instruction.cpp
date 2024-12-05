@@ -1,56 +1,25 @@
-#include "Instruction.h"
-#include <stdexcept>
+#include <Windows.h>
 
 #include "Instruction.h"
-#include "../Operands/BaseOperand.h"
-#include "../Operands/MemoryOperand.h"
-#include "../Operands/RegisterOperand.h"
-#include "../utils/Utils.h"
 
-std::vector<BaseOperand*>& Instruction::getOperands()
+uintptr_t MemoryOperand::getMemoryAddress()
 {
-	return operand_list;
+	return this->memoryAddress;
 }
 
-BaseOperand* Instruction::getOperand(uintptr_t index)
+void MemoryOperand::setMemoryAddress(uintptr_t memAddress)
 {
-	return operand_list[index];
+	this->memoryAddress = memAddress;
 }
 
-void Instruction::Unlink()
+void Operand::setOperand(const zasm::Operand& op)
 {
-	for (auto& op : operand_list) {
-		op->destroy();
-	}
+	this->operand = op;
 }
 
-void Instruction::DeleteFromList()
+zasm::Operand Operand::getZasmOperand()
 {
-	this->getNext()->setPrev(prev);
-	this->getPrev()->setNext(next);
-}
-
-void Instruction::Delete()
-{
-	DeleteFromList();
-	Unlink();
-	delete this;
-}
-
-
-Instruction* Instruction::getNext() const
-{
-	return next;
-}
-
-Instruction* Instruction::getPrev() const
-{
-	return prev;
-}
-
-uintptr_t Instruction::getCount()
-{
-	return count;
+	return this->operand;
 }
 
 void Instruction::setCount(uintptr_t count)
@@ -58,91 +27,67 @@ void Instruction::setCount(uintptr_t count)
 	this->count = count;
 }
 
-void Instruction::LinkInstruction()
+uintptr_t Instruction::getCount()
 {
-	for (auto& op : operand_list) {
-		op->Link();
-	}
+	return this->count;
 }
 
-void Instruction::setPrev(Instruction* instruction)
+void Instruction::setAddress(uintptr_t address)
 {
-	prev = instruction;
+	this->address = address;
 }
 
-void Instruction::setNext(Instruction* instruction)
+uintptr_t Instruction::getAddress()
 {
-	next = instruction;
+	return address;
 }
 
-Instruction* Instruction::insertAfter(Instruction* previous)
+void Instruction::addOperand(const OperandVariant& op)
 {
-	//printf("Insert after instructions: %s\n", formatInstruction(previous->getZasmInstruction()).c_str());
-	this->setPrev(previous);
-
-	this->setNext(previous->getNext());
-
-	if (previous->getNext())
-		previous->getNext()->setPrev(this);
-
-
-	previous->setNext(this);
-
-
-	this->setCount(countGlobal);
-
-	++countGlobal; 
-	return this;
+	operands.push_back(op);
 }
 
-Instruction* Instruction::insertBefore(Instruction* next)
+std::vector<OperandVariant>& Instruction::getOperands()
 {
-	this->setPrev(next->getPrev());
-	this->setNext(next);
-	next->setPrev(this);
-
-	setCount(next->getCount());
-
-	return this;
+	return operands;
 }
 
-void Instruction::addOperand(BaseOperand* baseOperand) {
-	baseOperand->setParent(this);
-
-	MemoryOperand* memOp = dynamic_cast<MemoryOperand*>(baseOperand);
-
-	if (memOp) {
-		memOp->getBase()->setParent(this);
-		memOp->getIndex()->setParent(this);
-	}
-	operand_list.push_back(baseOperand);
+zasm::InstructionDetail& Instruction::getZasmInstruction()
+{
+	return this->instruction;
 }
 
-void Instruction::deleteOperand(BaseOperand* baseOperand)
+void Instruction::setZasmInstruction(zasm::InstructionDetail& instruction)
 {
-	auto foundOperand = std::find(operand_list.begin(), operand_list.end(), baseOperand);
-
-	if (foundOperand == operand_list.end())
-		throw std::runtime_error("Failed during deleteOperand.Operand NotFound");
-
-	operand_list.erase(foundOperand);
+	this->instruction = instruction;
 }
 
-void Instruction::replaceOperand(BaseOperand* oldOperand, BaseOperand* newOperand)
+OperandVariant& Instruction::getOperand(uintptr_t index)
 {
-	auto foundOperand = std::find(operand_list.begin(), operand_list.end(), oldOperand);
-
-	if (foundOperand == operand_list.end())
-		throw std::runtime_error("Failed during replace operand.Operand NotFound");
-
-	this->instruction.setOperand(oldOperand->getIndex(), newOperand->getZasmOperand());
-
-	delete* foundOperand;
-
-	*foundOperand = newOperand;
+	return operands[index];
 }
 
-zasm::InstructionDetail Instruction::getZasmInstruction()
+void Instruction::setOperand(uintptr_t index,const OperandVariant& op)
 {
-	return instruction;
+	operands[index] = op;
+}
+
+std::array<uintptr_t, 17>& Instruction::getRegistersArray()
+{
+	return registerValues;
+}
+
+void Instruction::setRegisterValues(std::array<uintptr_t, 17> registers)
+{
+	this->registerValues = registers;
+}
+
+WORD& Instruction::getRflags()
+{
+	return rFlags;
+}
+
+void Instruction::setRFlags(WORD flags)
+{
+	this->rFlags = rFlags;
 }

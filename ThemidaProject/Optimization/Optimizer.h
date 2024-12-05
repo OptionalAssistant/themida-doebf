@@ -1,14 +1,17 @@
 #pragma once
-#include <vector>
+#include <list>
+#include <zasm/zasm.hpp>
+
+#include "../Instruction/Instruction.h"
 
 class BaseOptimization;
-class Instruction;
+
 
 class Optimizer
 {
 private:
-	std::vector<BaseOptimization*>passes;
+	std::list<BaseOptimization*>passes;
 public:
 	Optimizer();
-	bool run(Instruction* instruction);
+	bool run(std::list<Instruction>& instructions);
 };

@@ -1,9 +1,11 @@
 #pragma once
+#include <list>
+#include <zasm/zasm.hpp>
 
-class Instruction;
+#include "../Instruction/Instruction.h"
 
 class BaseOptimization
 {
 public:
-	virtual bool run(Instruction* instruction) = 0;
+	virtual bool run(std::list<Instruction>& instructions) = 0;
 };

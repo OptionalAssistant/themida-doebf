@@ -33,39 +33,6 @@
     <ClCompile Include="Devirt\deobf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Operands\BaseOperand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Instruction\Instruction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Operands\RegisterOperand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Operands\MemoryOperand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Operands\FlagsOperand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Operands\ConstantOperand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ByteOperand\MemoryByte.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ByteOperand\OperandUnit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ByteOperand\FlagBit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ByteOperand\RegisterByte.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Helpers\Linker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="callbacks\callbacks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,10 +42,25 @@
     <ClCompile Include="Optimization\Optimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Optimization\SimplifyConstantFolding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Instruction\Instruction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Helpers\Helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Optimization\SimplifyStackOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimization\SimplifyConstantOperation.cpp">
+    <ClCompile Include="Optimization\SimplifyMbaOperation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\Helpers\HelpersIterations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,39 +80,6 @@
     <ClInclude Include="Devirt\deobf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Operands\BaseOperand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Instruction\Instruction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Operands\RegisterOperand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Operands\MemoryOperand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Operands\FlagsOperand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Operands\ConstantOperand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ByteOperand\MemoryByte.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ByteOperand\OperandUnit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ByteOperand\FlagBit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ByteOperand\RegisterByte.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Helpers\Linker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="callbacks\callbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -140,10 +89,28 @@
     <ClInclude Include="Optimization\Optimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Optimization\SimplifyConstantFolding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Instruction\Instruction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers\Helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Optimization\SimplifyStackOperation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimization\SimplifyConstantOperation.h">
+    <ClInclude Include="utils\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyMbaOperation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\Helpers\HelpersIterations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

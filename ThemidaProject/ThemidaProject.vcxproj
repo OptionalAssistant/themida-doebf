@@ -139,50 +139,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Optimization\BaseOptimization.cpp" />
-    <ClCompile Include="ByteOperand\MemoryByte.cpp" />
-    <ClCompile Include="ByteOperand\FlagBit.cpp" />
-    <ClCompile Include="callbacks\callbacks.cpp" />
-    <ClCompile Include="Helpers\Linker.cpp" />
-    <ClCompile Include="Operands\ConstantOperand.cpp" />
-    <ClCompile Include="Operands\FlagsOperand.cpp" />
+    <ClCompile Include="Optimization\Helpers\HelpersIterations.cpp" />
+    <ClCompile Include="Helpers\Helpers.cpp" />
     <ClCompile Include="Instruction\Instruction.cpp" />
-    <ClCompile Include="Operands\MemoryOperand.cpp" />
-    <ClCompile Include="Operands\BaseOperand.cpp" />
+    <ClCompile Include="Optimization\BaseOptimization.cpp" />
+    <ClCompile Include="callbacks\callbacks.cpp" />
     <ClCompile Include="Devirt\deobf.cpp" />
     <ClCompile Include="emulator\emu.cpp" />
-    <ClCompile Include="ByteOperand\OperandUnit.cpp" />
     <ClCompile Include="Optimization\Optimizer.cpp" />
     <ClCompile Include="PE\PE.cpp" />
-    <ClCompile Include="Operands\RegisterOperand.cpp" />
-    <ClCompile Include="ByteOperand\RegisterByte.cpp" />
+    <ClCompile Include="Optimization\SimplifyConstantFolding.cpp" />
+    <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp" />
     <ClCompile Include="Optimization\SimplifyStackOperation.cpp" />
-    <ClCompile Include="Optimization\SimplifyConstantOperation.cpp" />
+    <ClCompile Include="Optimization\SimplifyMbaOperation.cpp" />
     <ClCompile Include="ThemidaProject.cpp" />
     <ClCompile Include="utils\Logger.cpp" />
     <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Optimization\BaseOptimization.h" />
-    <ClInclude Include="ByteOperand\MemoryByte.h" />
-    <ClInclude Include="ByteOperand\FlagBit.h" />
-    <ClInclude Include="callbacks\callbacks.h" />
-    <ClInclude Include="Helpers\Linker.h" />
-    <ClInclude Include="Operands\ConstantOperand.h" />
-    <ClInclude Include="Operands\FlagsOperand.h" />
+    <ClInclude Include="Optimization\Helpers\HelpersIterations.h" />
+    <ClInclude Include="Helpers\Helpers.h" />
     <ClInclude Include="Instruction\Instruction.h" />
-    <ClInclude Include="Operands\MemoryOperand.h" />
-    <ClInclude Include="Operands\BaseOperand.h" />
+    <ClInclude Include="Optimization\BaseOptimization.h" />
+    <ClInclude Include="callbacks\callbacks.h" />
     <ClInclude Include="Devirt\deobf.h" />
     <ClInclude Include="emulator\emu.h" />
-    <ClInclude Include="ByteOperand\OperandUnit.h" />
     <ClInclude Include="Optimization\Optimizer.h" />
     <ClInclude Include="PE\PE.h" />
-    <ClInclude Include="Operands\RegisterOperand.h" />
-    <ClInclude Include="ByteOperand\RegisterByte.h" />
+    <ClInclude Include="Optimization\SimplifyConstantFolding.h" />
+    <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h" />
     <ClInclude Include="Optimization\SimplifyStackOperation.h" />
-    <ClInclude Include="Optimization\SimplifyConstantOperation.h" />
+    <ClInclude Include="Optimization\SimplifyMbaOperation.h" />
     <ClInclude Include="utils\Logger.h" />
+    <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

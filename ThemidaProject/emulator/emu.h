@@ -198,6 +198,7 @@ public:
 
 	uintptr_t reg_read( zasm::Reg reg);
 
+	std::array<uintptr_t, 17> getRegistersValues();
 
 	void addCallback(callbackFunction callback, void* userData = nullptr);
 	void removeCallback(callbackFunction callbackDelete);
@@ -215,3 +216,8 @@ public:
 
 };
 
+
+
+uintptr_t reg_read_(std::array<uintptr_t, 17>& regs,zasm::Reg reg, WORD rFlag);
+
+void reg_write_(std::array<uintptr_t, 17>& regs,zasm::Reg reg, uintptr_t value, WORD& rFlags);

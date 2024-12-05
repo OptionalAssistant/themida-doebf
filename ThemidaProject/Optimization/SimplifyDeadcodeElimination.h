@@ -3,7 +3,7 @@
 
 #include "../Instruction/Instruction.h"
 
-class SimplifyStackOperation : public BaseOptimization
+class SimplifyDeadcodeElimination : public BaseOptimization
 {
 public:
 	virtual bool run(std::list<Instruction>& instructions);
