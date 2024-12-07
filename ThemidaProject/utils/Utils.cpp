@@ -2,6 +2,7 @@
 
 
 #include <fstream>
+#include <format>
 #include <zasm/formatter/formatter.hpp>
 
 #include "../Instruction/Instruction.h"
@@ -77,16 +78,44 @@ Instruction zasmToInstruction(zasm::InstructionDetail& instruction)
 		auto& op = instruction.getOperand(i);
 
 		if (op.holds<zasm::Mem>()) {
-			newInstruction.addOperand(MemoryOperand(op));
+			newInstruction.addOperand(new MemoryOperand(op));
 		}
 		else {
-			newInstruction.addOperand(Operand(op));
+			newInstruction.addOperand(new BaseOperand(op));
 		}
 	}
 
 	newInstruction.setZasmInstruction(instruction);
 
 	return newInstruction;
+}
+std::string formatMemoryOperand( MemoryOperand* memoryOp) {
+
+	std::string res;
+	res = std::format("{} : [ 0x{:x} ] ", actionToString(memoryOp->getOperandAccess()), memoryOp->getMemoryAddress());
+	return res;
+}
+std::string formatInstruction_( Instruction& instruction)
+{
+	std::string res = formatInstruction(instruction.getZasmInstruction());
+	
+	bool once = false;
+
+	for (int i = 0; i < instruction.getZasmInstruction().getOperandCount(); i++) {
+		
+		MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(instruction.getOperand(i));
+
+		if (memoryOperand) {
+			if (!once) {
+				res += "\n";
+				once = true;
+			}
+
+			res += std::format("OP :{:d} ", i) + formatMemoryOperand(memoryOperand);
+		}
+	}
+	
+	return res;
 }
 
 EmulatorCPU::Registers zasmToEmulatorRegister(const ZydisRegister_& reg)
@@ -228,5 +257,151 @@ uintptr_t zasmBitsToNumericSize(zasm::BitSize bs)
 		return 8;
 	default:
 		throw std::runtime_error("Invalid bs.Unable to convert zasmBitsToNumericSize");
+	}
+}
+
+
+std::string actionToString(const zasm::detail::OperandAccess& actionType) {
+
+	switch (actionType) {
+	case zasm::detail::OperandAccess::Read:
+		return "Read";
+	case  zasm::detail::OperandAccess::Write:
+		return "Write";
+	case  zasm::detail::OperandAccess::CondRead:
+		return "CondRead";
+	case  zasm::detail::OperandAccess::CondWrite:
+		return "CondWrite";
+	case  zasm::detail::OperandAccess::ReadWrite:
+		return "ReadWrite";
+	case  zasm::detail::OperandAccess::CondReadCondWrite:
+		return "CondReadCondWrite";
+	case  zasm::detail::OperandAccess::ReadCondWrite:
+		return "ReadCondWrite";
+	case  zasm::detail::OperandAccess::CondReadWrite:
+		return "CondReadWrite";
+	case  zasm::detail::OperandAccess::None:
+		return "None";
+	default:
+		throw std::runtime_error("Error during access to string function");
+		break;
+	}
+}
+
+zasm::InstructionDetail createMov(const zasm::Operand& op1, const zasm::Operand& op2)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::Write);
+	opAccess.set(1, zasm::Operand::Access::Read);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+
+	return zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Mov, 2,
+		ops, opAccess, opVisibility, {}, {});
+}
+
+zasm::InstructionDetail createSub(const zasm::Operand& op1,const  zasm::Operand& op2)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::ReadWrite);
+	opAccess.set(1, zasm::Operand::Access::Read);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+
+	return  zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Sub, 2,
+		ops, opAccess, opVisibility, {}, {});
+}
+
+zasm::InstructionDetail createXchg(const zasm::Operand& op1, const zasm::Operand& op2)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::ReadWrite);
+	opAccess.set(1, zasm::Operand::Access::ReadWrite);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+
+	return zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Xchg, 2,
+		ops, opAccess, opVisibility, {}, {});
+}
+
+zasm::InstructionDetail createPop(const zasm::Operand& op1, const zasm::Operand& op2,
+	const zasm::Operand& op3)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::Write);
+	opAccess.set(1, zasm::Operand::Access::ReadWrite);
+	opAccess.set(2, zasm::Operand::Access::Read);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Hidden);
+	opVisibility.set(2, zasm::Operand::Visibility::Hidden);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+	ops[2] = op3;
+
+	return zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Pop, 3,
+		ops, opAccess, opVisibility, {}, {});
+}
+
+zasm::InstructionDetail createPush(const zasm::Operand& op1,
+	const zasm::Operand& op2, const zasm::Operand& op3)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::Read);
+	opAccess.set(1, zasm::Operand::Access::ReadWrite);
+	opAccess.set(2, zasm::Operand::Access::Write);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Hidden);
+	opVisibility.set(2, zasm::Operand::Visibility::Hidden);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+	ops[2] = op3;
+
+	return zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Push, 3,
+		ops, opAccess, opVisibility, {}, {});
+}
+
+void printOutInstructions(std::list<Instruction>& instructions)
+{
+	for (auto& instruction : instructions) {
+		std::string toLog = std::format("Rva:0x{:x} count : {:d} | {} --\n",
+			instruction.getAddress(),
+			instruction.getCount(), formatInstruction_(instruction));
+		logger->log(toLog);
 	}
 }

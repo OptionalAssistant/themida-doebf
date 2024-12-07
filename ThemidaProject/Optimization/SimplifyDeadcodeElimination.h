@@ -6,6 +6,6 @@
 class SimplifyDeadcodeElimination : public BaseOptimization
 {
 public:
-	virtual bool run(std::list<Instruction>& instructions);
+	virtual bool run(std::list<Instruction>::iterator it, std::list<Instruction>& instructions);
 };
 

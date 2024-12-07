@@ -42,5 +42,21 @@ inline uintptr_t countGlobal = 0;
 
 Instruction zasmToInstruction(zasm::InstructionDetail& instruction);
 
+std::string formatInstruction_( Instruction& instruction);
 
 EmulatorCPU::Registers zasmToEmulatorRegister(const ZydisRegister_& reg);
+
+std::string actionToString(const zasm::detail::OperandAccess& actionType);
+
+zasm::InstructionDetail createMov(const zasm::Operand& op1, const zasm::Operand& op2);
+
+zasm::InstructionDetail createSub(const zasm::Operand& op1,const zasm::Operand& op2);
+
+zasm::InstructionDetail createXchg(const zasm::Operand& op1, const zasm::Operand& op2);
+
+zasm::InstructionDetail createPop(const zasm::Operand& op1, const zasm::Operand& op2,const zasm::Operand& op3);
+
+zasm::InstructionDetail createPush(const zasm::Operand& op1, const zasm::Operand& op2, const zasm::Operand& op3);
+
+
+void printOutInstructions(std::list<Instruction>& instructins);

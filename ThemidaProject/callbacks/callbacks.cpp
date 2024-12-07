@@ -21,25 +21,27 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
     for (int i = 0; i < operands.size(); i++) {
         auto& op = operands[i];
 
-        if (std::holds_alternative<MemoryOperand>(op)){
-             auto& memOperand = std::get<MemoryOperand>(op);
+        MemoryOperand* memOperand = dynamic_cast<MemoryOperand*>(op);
 
-            uintptr_t memoryAddress = cpu->CalcEffectiveMemAddress(memOperand.getZasmOperand(), i);
-            memOperand.setMemoryAddress(memoryAddress);
+        if (memOperand) {
+            uintptr_t memoryAddress = cpu->CalcEffectiveMemAddress(memOperand->getZasmOperand(), i);
+            memOperand->setMemoryAddress(memoryAddress);
         }
+
+        op->setOperandAccess(instruction_.getOperandAccess(i));
     }
 
-    std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} --\n",
-        address, instruction.getCount(), formatInstruction(instruction_));
+    std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",
+        address, instruction.getCount(), formatInstruction_(instruction));
     logger->log(toLog);
 
     data->instructions.push_back(instruction);
-
+    /*
     if (countGlobal == 1000) {
         cpu->stop_emu();
-    }
+    }*/
 
-    if(address == 0x0000000140069B03)
+    if(address == 0x000000014002FAE3)
         cpu->stop_emu();
 
     countGlobal++;

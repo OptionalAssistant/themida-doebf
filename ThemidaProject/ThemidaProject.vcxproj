@@ -147,11 +147,11 @@
     <ClCompile Include="Devirt\deobf.cpp" />
     <ClCompile Include="emulator\emu.cpp" />
     <ClCompile Include="Optimization\Optimizer.cpp" />
-    <ClCompile Include="PE\PE.cpp" />
     <ClCompile Include="Optimization\SimplifyConstantFolding.cpp" />
     <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp" />
-    <ClCompile Include="Optimization\SimplifyStackOperation.cpp" />
     <ClCompile Include="Optimization\SimplifyMbaOperation.cpp" />
+    <ClCompile Include="PE\PE.cpp" />
+    <ClCompile Include="Optimization\SimplifyStackOperation.cpp" />
     <ClCompile Include="ThemidaProject.cpp" />
     <ClCompile Include="utils\Logger.cpp" />
     <ClCompile Include="utils\Utils.cpp" />
@@ -165,13 +165,12 @@
     <ClInclude Include="Devirt\deobf.h" />
     <ClInclude Include="emulator\emu.h" />
     <ClInclude Include="Optimization\Optimizer.h" />
-    <ClInclude Include="PE\PE.h" />
     <ClInclude Include="Optimization\SimplifyConstantFolding.h" />
     <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h" />
-    <ClInclude Include="Optimization\SimplifyStackOperation.h" />
     <ClInclude Include="Optimization\SimplifyMbaOperation.h" />
+    <ClInclude Include="PE\PE.h" />
+    <ClInclude Include="Optimization\SimplifyStackOperation.h" />
     <ClInclude Include="utils\Logger.h" />
-    <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

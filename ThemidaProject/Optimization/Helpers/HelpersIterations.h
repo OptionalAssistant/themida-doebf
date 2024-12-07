@@ -16,7 +16,7 @@ int64_t calculateSubAdd(std::vector<zasm::InstructionDetail > instruction);
 
 std::list<Instruction>::iterator getNextRegisterAccess(std::list<Instruction>::iterator itStart,
     std::list<Instruction>::iterator itEnd,
-    zasm::x86::Reg& foundReg);
+     zasm::x86::Reg& foundReg);
 
 std::list<Instruction>::iterator getNextRegisterWrite(std::list<Instruction>::iterator itStart,
     std::list<Instruction>::iterator itEnd,
@@ -34,4 +34,4 @@ std::list<Instruction>::iterator getNextRegisterReadWriteOrWrite(std::list<Instr
     std::list<Instruction>::iterator itEnd,
     zasm::x86::Reg& foundReg);
 
-bool isSameRegister( zasm::x86::Reg& reg1,  zasm::x86::Reg& reg2);
+bool isSameRegister( zasm::x86::Reg& reg1, zasm::x86::Reg& reg2);

@@ -42,12 +42,6 @@
     <ClCompile Include="Optimization\Optimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimization\SimplifyConstantFolding.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Instruction\Instruction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,10 +51,16 @@
     <ClCompile Include="Optimization\SimplifyStackOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimization\SimplifyMbaOperation.cpp">
+    <ClCompile Include="Optimization\Helpers\HelpersIterations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Optimization\Helpers\HelpersIterations.cpp">
+    <ClCompile Include="Optimization\SimplifyConstantFolding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimization\SimplifyMbaOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,12 +89,6 @@
     <ClInclude Include="Optimization\Optimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Optimization\SimplifyConstantFolding.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Instruction\Instruction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -104,13 +98,16 @@
     <ClInclude Include="Optimization\SimplifyStackOperation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\types.h">
+    <ClInclude Include="Optimization\Helpers\HelpersIterations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyConstantFolding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Optimization\SimplifyMbaOperation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Optimization\Helpers\HelpersIterations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

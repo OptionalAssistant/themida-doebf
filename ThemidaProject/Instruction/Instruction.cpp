@@ -12,15 +12,26 @@ void MemoryOperand::setMemoryAddress(uintptr_t memAddress)
 	this->memoryAddress = memAddress;
 }
 
-void Operand::setOperand(const zasm::Operand& op)
+void BaseOperand::setOperand(const zasm::Operand& op)
 {
 	this->operand = op;
 }
 
-zasm::Operand Operand::getZasmOperand()
+zasm::Operand BaseOperand::getZasmOperand()
 {
 	return this->operand;
 }
+
+void BaseOperand::setOperandAccess(zasm::detail::OperandAccess op_access)
+{
+	this->op_access = op_access;
+}
+
+zasm::detail::OperandAccess BaseOperand::getOperandAccess()
+{
+	return this->op_access;
+}
+
 
 void Instruction::setCount(uintptr_t count)
 {
@@ -42,12 +53,12 @@ uintptr_t Instruction::getAddress()
 	return address;
 }
 
-void Instruction::addOperand(const OperandVariant& op)
+void Instruction::addOperand( BaseOperand* op)
 {
 	operands.push_back(op);
 }
 
-std::vector<OperandVariant>& Instruction::getOperands()
+std::vector<BaseOperand*>& Instruction::getOperands()
 {
 	return operands;
 }
@@ -62,15 +73,17 @@ void Instruction::setZasmInstruction(zasm::InstructionDetail& instruction)
 	this->instruction = instruction;
 }
 
-OperandVariant& Instruction::getOperand(uintptr_t index)
+BaseOperand* Instruction::getOperand(uintptr_t index)
 {
-	return operands[index];
+	return this->operands[index];
 }
 
-void Instruction::setOperand(uintptr_t index,const OperandVariant& op)
+
+void Instruction::setOperand(uintptr_t index,  BaseOperand* op)
 {
-	operands[index] = op;
+	this->operands[index] = op;
 }
+
 
 std::array<uintptr_t, 17>& Instruction::getRegistersArray()
 {

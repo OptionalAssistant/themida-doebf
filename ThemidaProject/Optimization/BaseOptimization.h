@@ -7,5 +7,5 @@
 class BaseOptimization
 {
 public:
-	virtual bool run(std::list<Instruction>& instructions) = 0;
+	virtual bool run(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) = 0;
 };

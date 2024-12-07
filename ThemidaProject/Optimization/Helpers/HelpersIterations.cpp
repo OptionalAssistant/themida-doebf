@@ -21,7 +21,7 @@ int64_t calculateSubAdd(std::vector<zasm::InstructionDetail > instructions) {
 
 std::list<Instruction>::iterator getNextRegisterAccess(std::list<Instruction>::iterator itStart,
     std::list<Instruction>::iterator itEnd,
-    zasm::x86::Reg& foundReg)
+     zasm::x86::Reg& foundReg)
 {
     for (; itStart != itEnd; itStart++) {
         auto& instruction = *itStart;
@@ -51,13 +51,14 @@ std::list<Instruction>::iterator getNextRegisterAccess(std::list<Instruction>::i
 
 std::list<Instruction>::iterator getNextRegisterRead(std::list<Instruction>::iterator itStart, std::list<Instruction>::iterator itEnd, zasm::x86::Reg& foundReg)
 {
-    for (; itStart != itEnd; itStart++) {
+    for (; itStart != itEnd;) {
         auto foundIt  = getNextRegisterAccess(itStart, itEnd, foundReg);
         if (foundIt == itEnd)
             return itEnd;
 
         auto& instruction = *foundIt;
 
+   
         for (int i = 0; i < instruction.getZasmInstruction().getOperandCount();i++) {
             auto op = instruction.getZasmInstruction().getOperand(i);
 
@@ -68,15 +69,16 @@ std::list<Instruction>::iterator getNextRegisterRead(std::list<Instruction>::ite
             else if (op.holds<zasm::Mem>()) {
                 auto baseReg = op.get<zasm::Mem>().getBase();
                 if (isSameRegister(baseReg, foundReg)) {
-                    return itStart;
+                    return foundIt;
                 }
                 auto indexReg = op.get<zasm::Mem>().getIndex();
                 if (isSameRegister(indexReg, foundReg)) {
-                    return itStart;
+                    return foundIt;
                 }
             }
         }
 
+        itStart = std::next(foundIt);
     }
 
     return itEnd;
@@ -84,7 +86,7 @@ std::list<Instruction>::iterator getNextRegisterRead(std::list<Instruction>::ite
 
 std::list<Instruction>::iterator getNextRegisterWrite(std::list<Instruction>::iterator itStart, std::list<Instruction>::iterator itEnd, zasm::x86::Reg& foundReg)
 {
-    for (; itStart != itEnd; itStart++) {
+    for (; itStart != itEnd;) {
         auto foundIt = getNextRegisterAccess(itStart, itEnd, foundReg);
         if (foundIt == itEnd)
             return itEnd;
@@ -100,6 +102,7 @@ std::list<Instruction>::iterator getNextRegisterWrite(std::list<Instruction>::it
             }
         }
 
+        itStart = std::next(foundIt);
     }
 
     return itEnd;
@@ -107,7 +110,7 @@ std::list<Instruction>::iterator getNextRegisterWrite(std::list<Instruction>::it
 
 std::list<Instruction>::iterator getNextRegisterReadWrite(std::list<Instruction>::iterator itStart, std::list<Instruction>::iterator itEnd, zasm::x86::Reg& foundReg)
 {
-    for (; itStart != itEnd; itStart++) {
+    for (; itStart != itEnd;) {
         auto foundIt = getNextRegisterAccess(itStart, itEnd, foundReg);
         if (foundIt == itEnd)
             return itEnd;
@@ -123,6 +126,7 @@ std::list<Instruction>::iterator getNextRegisterReadWrite(std::list<Instruction>
             }
         }
 
+        itStart = std::next(foundIt);
     }
 
     return itEnd;

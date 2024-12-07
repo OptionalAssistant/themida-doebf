@@ -18,19 +18,11 @@ void deobf::run(uintptr_t rva)
 
 	m_cpu->run(rva);
 
-	bool isContinue;
-	do
-	{
-		isContinue = optimizer->run(userData->instructions);
 
-	} while (isContinue);
+
+    optimizer->run(userData->instructions);
 
 	logger->log("After\n");
 
-	for (auto& instruction : userData->instructions) {
-		std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} --\n",
-			instruction.getAddress(),
-			instruction.getCount(), formatInstruction(instruction.getZasmInstruction()));
-		logger->log(toLog);
-	}
+	printOutInstructions(userData->instructions);
 }
