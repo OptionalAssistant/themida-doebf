@@ -1,7 +1,7 @@
 #include "SimplifyMbaOperation.h"
 #include "./Helpers/HelpersIterations.h"
 #include "../utils/Utils.h"
-
+#include "../utils/Logger.h"
 
 /* xor rdx, qword ptr ss : [rsp] --
 xor qword ptr ss : [rsp] , rdx --
@@ -47,22 +47,22 @@ bool Optimize3XorToXchg(std::list<Instruction>::iterator it, std::list<Instructi
         return false;
     }
 
-    printf("Found 3 xor to xchg optimization at count: %d\n", instruction1.getCount());
-
+   // printf("Found 3 xor to xchg optimization at count: %d\n", instruction1.getCount());
 
     auto newZasmInstruction = createXchg(op1, op2);
 
     Instruction newInstruction;
     newInstruction.setZasmInstruction(newZasmInstruction);
+    newInstruction.setRegisterValues(instruction1.getRegistersArray());
 
     newInstruction.addOperand(instruction1.getOperand(0));
-    newInstruction.addOperand(instruction2.getOperand(1));
+    newInstruction.addOperand(instruction1.getOperand(1));
 
     newInstruction.setCount(countGlobal++);
 
-    printf("Generated new instruction: %s count: %d\n",
+   /* printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+        newInstruction.getCount());*/
 
     instructions.insert(it3, newInstruction);
 
@@ -88,6 +88,7 @@ bool OptimizeXorSameRegister(std::list<Instruction>::iterator it, std::list<Inst
 
     Instruction newInstruction;
     newInstruction.setZasmInstruction(newZasmInstruction);
+    newInstruction.setRegisterValues(instruction.getRegistersArray());
 
     newInstruction.addOperand(instruction.getOperand(0));
     newInstruction.addOperand(new BaseOperand(zasm::Imm(0)));
@@ -107,13 +108,17 @@ bool OptimizeXorSameRegister(std::list<Instruction>::iterator it, std::list<Inst
 /*
 push rsi --
 mov rsi,rsp
+add rsi,8
+add rsi,8
 xchg qword ptr ss:[rsp], rsi --
-add rsp,10
 pop rsp ||  mov rsp,[rsp] --
 ------------------->
 add rsp,8
 */
-bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+  
+    std::vector<std::list<Instruction>::iterator>instructions_to_delete;
+
     auto& instruction1 = *it;
 
     if (instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push ||
@@ -139,22 +144,29 @@ bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Inst
     }
 
     auto it3 = nextIter(it2, instructions.end());
+    
+    while (true) {
 
-    if (it3 == instructions.end()) {
+        if (it3 == instructions.end())
+            return false;
+
+        auto& instruction3 = *it3;
+
+        if ((instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
+            instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub) ||
+            !instruction3.getZasmInstruction().getOperand(1).holds<zasm::Imm>() ||
+            !instruction3.getZasmInstruction().getOperand(0).holds<zasm::Reg>() ||
+            instruction3.getZasmInstruction().getOperand(0) != op1) {
+            it3--;
+            break;
+        }
+        instructions_to_delete.push_back(it3);
+        
+        it3++;
+    }
+
+    if (instructions_to_delete.empty())
         return false;
-    }
-
-
-    auto& instruction3 = *it3;
-
-
-    if ((instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
-        instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub) ||
-        !instruction3.getZasmInstruction().getOperand(1).holds<zasm::Imm>() ||
-        !instruction3.getZasmInstruction().getOperand(0).holds<zasm::Reg>() ||
-        instruction3.getZasmInstruction().getOperand(0) != op1) {
-         return false;
-    }
 
     auto it4 = nextIter(it3, instructions.end());
 
@@ -210,11 +222,16 @@ bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Inst
         return false;
     }
 
-    int64_t result = calculateSubAdd({ instruction3.getZasmInstruction() });
+    std::vector<zasm::InstructionDetail>instructions_calc;
+
+    for (auto& item : instructions_to_delete) {
+        instructions_calc.push_back(item->getZasmInstruction());
+    }
+    int64_t result = calculateSubAdd(instructions_calc);
     result -= 8;
 
-    printf("Found unoptimized stack pointer arithmetic(xchg) (second case): %d\n",
-        instruction1.getCount());
+    /*printf("Found unoptimized stack pointer arithmetic(xchg) (second case): %d\n",
+        instruction1.getCount());*/
 
     auto mnemonic = result < 0 ? zasm::x86::Mnemonic::Sub : zasm::x86::Mnemonic::Add;
     int64_t immediateValue = std::abs(result);
@@ -239,6 +256,7 @@ bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Inst
 
     Instruction newInstruction;
     newInstruction.setZasmInstruction(newZasmInstruction);
+    newInstruction.setRegisterValues(instruction1.getRegistersArray());
 
     newInstruction.addOperand(new BaseOperand(zasm::x86::rsp));
     newInstruction.addOperand(new BaseOperand(zasm::Imm(8)));
@@ -247,14 +265,16 @@ bool OptimizeXchgToRspChange(std::list<Instruction>::iterator it, std::list<Inst
 
     instructions.insert(it5, newInstruction);
 
-    printf("Generated new instruction: %s count: %d\n",
+    /*printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+        newInstruction.getCount());*/
 
 
     instructions.erase(it5);
     instructions.erase(it4);
-    instructions.erase(it3);
+    for (auto& item : instructions_to_delete) {
+        instructions.erase(item);
+    }
     instructions.erase(it2);
     it = instructions.erase(it);
 
@@ -268,7 +288,7 @@ pop rax --
 ------
 mov r11,r11
 */
-bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
 
     if (instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push ||
@@ -317,8 +337,8 @@ bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& 
         instruction4.getZasmInstruction().getOperand(0) != op1) {
         return false;
     }
-    printf("Found instructions that does notging at count(mov actually): %d\n",
-        instruction1.getCount());
+    /*printf("Found instructions that does notging at count(mov actually): %d\n",
+        instruction1.getCount());*/
 
 
     auto newZasmInstruction = createMov(instruction3.getZasmInstruction().getOperand(0),
@@ -326,6 +346,7 @@ bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& 
    
     Instruction newInstruction;
     newInstruction.setZasmInstruction(newZasmInstruction);
+    newInstruction.setRegisterValues(instruction1.getRegistersArray());
 
     newInstruction.addOperand(instruction3.getOperand(0));
     newInstruction.addOperand(instruction2.getOperand(1));
@@ -335,9 +356,9 @@ bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& 
     instructions.insert(it4, newInstruction);
 
 
-    printf("Generated new instruction: %s count: %d\n",
+   /* printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+        newInstruction.getCount());*/
 
     instructions.erase(it);
     instructions.erase(it2);
@@ -352,11 +373,9 @@ mov r13, rdx --
 mov qword ptr ss:[rsp+0x08], r13 --
 pop r13 --
 */
-bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
-
-    if (instruction1.getCount() == 1065)
-        printf("");
+ 
 
     if (instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push ||
         !instruction1.getZasmInstruction().getOperand(0).holds<zasm::Reg>()) {
@@ -390,9 +409,8 @@ bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruction>& 
     if ((instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Mov &&
         instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Xor) ||
         !instruction3.getZasmInstruction().getOperand(0).holds<zasm::Mem>() ||
-        instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() < 8 ||
-        instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() != zasm::x86::rsp ||
-        instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getIndex().getId() != zasm::x86::Reg::Id::None ||
+        (instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() < 8 &&
+        instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() == zasm::x86::rsp) ||
         !instruction3.getZasmInstruction().getOperand(1).holds<zasm::Reg>() ||
         instruction3.getZasmInstruction().getOperand(1).get<zasm::Reg>() != op1) {
         return false;
@@ -414,19 +432,21 @@ bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruction>& 
     }
 
 
-    printf("Found push mov mov pop to mov mem: %s count: %d\n",
+    /*printf("Found push mov mov pop to mov mem: %s count: %d\n",
         formatInstruction(instruction1.getZasmInstruction()).c_str(),
-        instruction1.getCount());
+        instruction1.getCount());*/
 
     auto disp = instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement();
 
+    if(instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() == zasm::x86::rsp)
     instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().setDisplacement(disp - 8);
+    
     instruction3.setOperand(1, instruction2.getOperand(1));
     instruction3.getZasmInstruction().setOperand(1, instruction2.getZasmInstruction().getOperand(1));
 
-    printf("Generated new instruction: %s count: %d\n",
+   /* printf("Generated new instruction: %s count: %d\n",
         formatInstruction(instruction3.getZasmInstruction()).c_str(),
-        instruction3.getCount());
+        instruction3.getCount());*/
 
     instructions.erase(it4);
     instructions.erase(it2);
@@ -450,7 +470,7 @@ sub rbp, 0x7c7c02df --
 ------------->
 mov rbp,rbp
 */
-bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
 
     if (instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push ||
@@ -507,14 +527,23 @@ bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& 
         return false;
     }
 
-    auto& gpRegister = instruction4.getZasmInstruction().getOperand(0).get<zasm::Reg>().as<zasm::x86::Gp>();
+    if (op3.holds<zasm::Reg>() && instruction4.getZasmInstruction().getOperand(0).holds<zasm::Reg>()) {
+        auto& gpRegister = instruction4.getZasmInstruction().getOperand(0).get<zasm::Reg>().as<zasm::x86::Gp>();
 
-    auto& gpRegisterCompared = op3.get<zasm::Reg>().as<zasm::x86::Gp>();
+        auto& gpRegisterCompared = op3.get<zasm::Reg>().as<zasm::x86::Gp>();
 
-    if (gpRegisterCompared != gpRegister.r32() &&
-        gpRegisterCompared != gpRegister.r64()) {
+        if (gpRegisterCompared != gpRegister.r32() &&
+            gpRegisterCompared != gpRegister.r64()) {
+            return false;
+        }
+    }
+
+    if ((!op3.holds<zasm::Reg>() || !instruction4.getZasmInstruction().getOperand(0).holds<zasm::Reg>()) &&
+        op3 != instruction4.getZasmInstruction().getOperand(0)) {
         return false;
     }
+
+    
     if (instruction4.getZasmInstruction().getMnemonic() == instruction2.getZasmInstruction().getMnemonic() &&
         instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Xor) {
         return false;
@@ -529,8 +558,8 @@ bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& 
         return false;
 
     }
-    printf("Found push xor pop xor to mov simplification at count: %d\n",
-        instruction4.getCount());
+    //printf("Found push xor pop xor to mov simplification at count: %d\n",
+    //    instruction4.getCount());
 
 
     auto newZasmInstruction = createMov(instruction4.getZasmInstruction().getOperand(0),
@@ -538,6 +567,7 @@ bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& 
 
     Instruction newInstruction;
     newInstruction.setZasmInstruction(newZasmInstruction);
+    newInstruction.setRegisterValues(instruction1.getRegistersArray());
 
     newInstruction.addOperand(instruction4.getOperand(0));
     newInstruction.addOperand(instruction1.getOperand(0));
@@ -551,9 +581,9 @@ bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& 
     instructions.erase(it2);
     it = instructions.erase(it);
 
-    printf("Generated new instruction: %s count: %d\n",
-        formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+    //printf("Generated new instruction: %s count: %d\n",
+    //    formatInstruction(newInstruction.getZasmInstruction()).c_str(),
+    //    newInstruction.getCount());
 
     return true;
 }
@@ -565,7 +595,7 @@ bool OptimizePass5(std::list<Instruction>::iterator it, std::list<Instruction>& 
 //------------------->
 //sub rsp,8
 //*/
-bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
 
 
@@ -599,10 +629,6 @@ bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruction>& 
 
     auto& instruction3 = *it3;
 
-    if (instruction1.getCount() == 1091) {
-        printf("%s\n", formatInstruction(instruction3.getZasmInstruction()).c_str());
-
-    }
     if ((instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Xchg ||
         !instruction3.getZasmInstruction().getOperand(0).holds<zasm::Mem>() ||
         instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() != zasm::x86::rsp ||
@@ -649,7 +675,7 @@ bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruction>& 
         return false;
     }
 
-    printf("Found unoptimized stack pointer arithmetic(xchg) : %d\n", instruction1.getCount());
+    /*printf("Found unoptimized stack pointer arithmetic(xchg) : %d\n", instruction1.getCount());*/
 
     
     auto newZasmInstruction = createSub(zasm::x86::rsp, zasm::Imm(8));
@@ -664,9 +690,9 @@ bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruction>& 
 
     instructions.insert(it4, newInstruction);
 
-    printf("Generated new instruction: %s count: %d\n",
+  /*  printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+        newInstruction.getCount());*/
 
 
 
@@ -683,7 +709,7 @@ push r13 --
 mov qword ptr ss:[rsp+0x08], 0x00000038 --
 pop r13 -- Fuck this pass.....Needed.....
 */
-bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
 
     if (instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push) {
@@ -701,7 +727,9 @@ bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& 
     if (!instruction2.getZasmInstruction().getOperand(0).holds<zasm::Mem>() ||
         instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() < 8 ||
         instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() != zasm::x86::rsp ||
-        instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getIndex().getId() != zasm::x86::Reg::Id::None) {
+        instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getIndex().getId() != zasm::x86::Reg::Id::None ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Pop) {
         return false;
     }
 
@@ -719,9 +747,9 @@ bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& 
     }
 
 
-    printf("Found push mov mov pop to mov mem: %s count: %d\n",
+   /* printf("Found push mov mov pop to mov mem: %s count: %d\n",
         formatInstruction(instruction1.getZasmInstruction()).c_str(),
-        instruction1.getCount());
+        instruction1.getCount());*/
 
     auto disp = instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement();
 
@@ -733,23 +761,22 @@ bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& 
 
     Instruction newInstruction2;
     newInstruction2.setZasmInstruction(newZasmInstruction2);
+    newInstruction2.setRegisterValues(instruction1.getRegistersArray());
 
     newInstruction2.addOperand(instruction3.getOperand(0));
     newInstruction2.addOperand(instruction1.getOperand(0));
 
     newInstruction2.setCount(countGlobal++);
 
-    if (instruction1.getCount() == 45)
-        printf("");
-
-    printf("Generated new instruction: %s count: %d\n",
+ /*   printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction2.getZasmInstruction()).c_str(),
         newInstruction2.getCount());
 
     printf("Generated new instruction(2): %s count: %d\n",
         formatInstruction(instruction2.getZasmInstruction()).c_str(),
-        instruction2.getCount());
+        instruction2.getCount());*/
 
+  
     instructions.insert(it3, newInstruction2);
 
     instructions.erase(it3);
@@ -772,8 +799,8 @@ bool SimplifyMbaOperation::run(std::list<Instruction>::iterator it, std::list<In
         return true;
     if (OptimizePass5(it, instructions))
         return true;
-    if (OptimizePass6(it, instructions))
-        return true;
+    //if (OptimizePass6(it, instructions))
+    //    return true;
     if (OptimizePass7(it, instructions))
         return true;
 

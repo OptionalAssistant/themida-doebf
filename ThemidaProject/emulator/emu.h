@@ -120,6 +120,8 @@ private:
 	void HandleCqo();
 	void HandleBt();
 	void HandleCdq();
+	void HandleIMul();
+	void HandleIDiv();
 
 	void SetCarryFlag();
 	void SetParityFlag();

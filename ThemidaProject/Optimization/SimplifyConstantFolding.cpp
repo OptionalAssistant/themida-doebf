@@ -5,9 +5,10 @@
 #include "./Helpers/HelpersIterations.h"
 #include "../utils/Utils.h"
 #include "../emulator/emu.h"
+#include "../utils/Logger.h"
 
 //Read constant folding
-bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     bool isChanged = false;
     
     auto& instruction1 = *it;
@@ -20,7 +21,7 @@ bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction
         return false;
     }
 
-    printf("Found mov reg,const at count: %d\n", instruction1.getCount());
+   // printf("Found mov reg,const at count: %d\n", instruction1.getCount());
 
     auto nextWrite = getNextRegisterReadWriteOrWrite(std::next(it), instructions.end(),
         zydis_instr.getOperand(0).get<zasm::Reg>());
@@ -42,8 +43,7 @@ bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction
 
         auto& readInstruction = *itRead;
 
-        printf("Found read (Constant actually) at count: %d\n", readInstruction.getCount());
-
+        printf("Found read (Constant actually) at count: %d\n", readInstruction.getCount());;
 
         if (readInstruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push) {
             itStart = std::next(itRead);
@@ -55,10 +55,12 @@ bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction
 
             if (op.holds<zasm::Reg>() &&
                 isSameRegister(op.get<zasm::Reg>(), zydis_instr.getOperand(0).get<zasm::Reg>())) {
-
+                if (readInstruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::ReadCondWrite) {
+                    continue;
+                }
+           
                 if (readInstruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Read)
                 {
-
                     readInstruction.setOperand(i, new BaseOperand(immValue));
                     readInstruction.getZasmInstruction().setOperand(i, immValue);
                     isChanged = true;
@@ -71,11 +73,11 @@ bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction
                     op.get<zasm::Mem>().setBase(zasm::Reg(zasm::Reg::Id::None));
                     isChanged = true;
                 }
-                auto indexReg = op.get<zasm::Mem>().getIndex();
+           /*     auto indexReg = op.get<zasm::Mem>().getIndex();
                 if (isSameRegister(indexReg, zydis_instr.getOperand(0).get<zasm::Reg>())) {
                     op.get<zasm::Mem>().setIndex(zasm::Reg(zasm::Reg::Id::None));
                     isChanged = true;
-                }
+                }*/
             }
         }
         itStart = std::next(itRead);
@@ -84,7 +86,7 @@ bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction
     return isChanged;
 }
 //Sub reg,8 Add reg,16
-bool foldSubAddConstant(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool foldSubAddConstant(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto instruction1 = *it;
 
     if ((instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
@@ -106,17 +108,32 @@ bool foldSubAddConstant(std::list<Instruction>::iterator it, std::list<Instructi
 
     if ((instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
         instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub) ||
-        !instruction2.getZasmInstruction().getOperand(1).holds<zasm::Imm>() ||
-        instruction2.getZasmInstruction().getOperand(0) != op1) {
+        !instruction2.getZasmInstruction().getOperand(1).holds<zasm::Imm>()) {
         return false;
     }
 
-    printf("Found unfold sub-add at count: %d\n", instruction1.getCount());
+    if (op1.holds<zasm::Reg>() && instruction2.getZasmInstruction().getOperand(0).holds<zasm::Reg>()) {
+        auto& gpRegister = instruction2.getZasmInstruction().getOperand(0).get<zasm::Reg>().as<zasm::x86::Gp>();
+
+        auto& gpRegisterCompared = op1.get<zasm::Reg>().as<zasm::x86::Gp>();
+
+        if (gpRegisterCompared != gpRegister.r32() &&
+            gpRegisterCompared != gpRegister.r64()) {
+            return false;
+        }
+    }
+
+    if ((!op1.holds<zasm::Reg>()  || !instruction2.getZasmInstruction().getOperand(0).holds<zasm::Reg>())&&
+        op1 != instruction2.getZasmInstruction().getOperand(0)) {
+        return false;
+    }
+
+   // printf("Found unfold sub-add at count: %d\n", instruction1.getCount());
 
 
     int64_t result = calculateSubAdd({ instruction1.getZasmInstruction(),instruction2.getZasmInstruction() });
 
-    printf("Result folding : %lld\n", result);
+    //printf("Result folding : %lld\n", result);
 
     auto mnemonic = result < 0 ? zasm::x86::Mnemonic::Sub : zasm::x86::Mnemonic::Add;
     int64_t immediateValue = std::abs(result); // Ensure immediate is positive
@@ -149,9 +166,9 @@ bool foldSubAddConstant(std::list<Instruction>::iterator it, std::list<Instructi
 
     instructions.insert(it2, newInstruction);
 
-    printf("Generated new instruction: %s count: %d\n",
+   /* printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction.getZasmInstruction()).c_str(),
-        newInstruction.getCount());
+        newInstruction.getCount());*/
 
     instructions.erase(it2);
     it = instructions.erase(it);
@@ -160,13 +177,10 @@ bool foldSubAddConstant(std::list<Instruction>::iterator it, std::list<Instructi
 }
 
 //ReadWrite constant folding
-bool ReadWriteConstantFolding(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+static bool ReadWriteConstantFolding(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
 
     auto& zydis_instr = instruction1.getZasmInstruction();
-
-    if (instruction1.getCount() == 252)
-        printf("");
 
     if (zydis_instr.getMnemonic() != zasm::x86::Mnemonic::Mov ||
         !zydis_instr.getOperand(0).holds<zasm::Reg>() ||
@@ -233,7 +247,7 @@ bool ReadWriteConstantFolding(std::list<Instruction>::iterator it, std::list<Ins
         return false;
     }
 
-    printf("Found constant folding optimization at count: %d\n", instruction1.getCount());
+    //printf("Found constant folding optimization at count: %d\n", instruction1.getCount());
 
     auto& instruction3 = *it3;
 
@@ -259,14 +273,156 @@ bool ReadWriteConstantFolding(std::list<Instruction>::iterator it, std::list<Ins
     instruction1.getZasmInstruction().setOperand(1, zasm::Imm(value));
 
 
-    printf("Updated mov reg,const  instruction: %s count: %d\n",
+    /*printf("Updated mov reg,const  instruction: %s count: %d\n",
         formatInstruction(instruction1.getZasmInstruction()).c_str(),
-        instruction1.getCount());
+        instruction1.getCount());*/
 
     instructions.erase(nextAccess);
 
     return true;
 }
+
+//Constant folding  push const
+static bool OptimizePass1(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+    
+    bool isChanged = false;
+
+    auto& instruction = *it;
+
+    if (instruction.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Push ||
+        !instruction.getZasmInstruction().getOperand(0).holds<zasm::Imm>())
+        return false;
+
+    MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(instruction.getOperand(2));
+
+    auto itNextMemoryWrite = getNextMemoryWrite(std::next(it), 
+        instructions.end(), memoryOperand->getMemoryAddress());
+
+    if (itNextMemoryWrite == instructions.end())
+        return false;
+
+
+    for (auto itStart = it; itStart != itNextMemoryWrite;) {
+
+        auto itRead = getNextMemoryRead(itStart, itNextMemoryWrite, memoryOperand->getMemoryAddress());
+
+        if (itRead == itNextMemoryWrite)
+            break;
+        auto& readInstruction = *itRead;
+
+        if (readInstruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Mov) {
+            
+            readInstruction.getZasmInstruction().setOperand(1,
+                instruction.getZasmInstruction().getOperand(0));
+            readInstruction.setOperand(1,instruction.getOperand(0));
+            
+            //printf("Found push constant at count : %d\n", instruction.getCount());
+           // printf("Found read this constant at count : %d\n", readInstruction.getCount());
+            
+
+
+            isChanged = true;
+        }
+
+        itStart = std::next(itRead);
+    }
+
+    return isChanged;
+}
+static bool OptimizePass2(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+    auto& instruction1 = *it;
+
+
+    if ((instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub &&
+        instruction1.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add) ||
+        !instruction1.getZasmInstruction().getOperand(1).holds<zasm::Imm>())
+        return false;
+
+    auto it2 = nextIter(it, instructions.begin());
+
+    if (it2 == instructions.end())
+        return false;
+
+    auto& instruction2 = *it2;
+
+    if ((instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add) ||
+        !instruction2.getZasmInstruction().getOperand(1).holds<zasm::Reg>())
+        return false;
+
+    auto it3 = nextIter(it2, instructions.begin());
+
+    if (it3 == instructions.end())
+        return false;
+
+    auto& instruction3 = *it3;
+
+    if ((instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub &&
+        instruction3.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add) ||
+        !instruction3.getZasmInstruction().getOperand(1).holds<zasm::Imm>())
+        return false;
+
+    if (instruction1.getZasmInstruction().getMnemonic() == instruction3.getZasmInstruction().getMnemonic() ||
+        instruction1.getZasmInstruction().getOperand(1).get<zasm::Imm>() != 
+        instruction3.getZasmInstruction().getOperand(1).get<zasm::Imm>())
+         return false;
+
+    if (instruction1.getZasmInstruction().getOperand(0) != instruction2.getZasmInstruction().getOperand(0) ||
+        instruction1.getZasmInstruction().getOperand(0) != instruction3.getZasmInstruction().getOperand(0) ||
+        instruction2.getZasmInstruction().getOperand(0) != instruction1.getZasmInstruction().getOperand(0) ||
+        instruction2.getZasmInstruction().getOperand(0) != instruction3.getZasmInstruction().getOperand(0) ||
+        instruction3.getZasmInstruction().getOperand(0) != instruction1.getZasmInstruction().getOperand(0) ||
+        instruction3.getZasmInstruction().getOperand(0) != instruction2.getZasmInstruction().getOperand(0))
+        return false;
+
+   // printf("Found useless add and sub with register between %d\n", instruction1.getCount());
+
+    instructions.erase(it3);
+    instructions.erase(it);
+
+    return true;
+}
+
+static bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
+    auto& instruction = *it;
+
+    if (instruction.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Mov ||
+        !instruction.getZasmInstruction().getOperand(0).holds<zasm::Mem>() ||
+        !instruction.getZasmInstruction().getOperand(1).holds<zasm::Imm>())
+        return false;
+
+    auto it2 = nextIter(it, instructions.end());
+
+    if (it2 == instructions.end())
+        return false;
+
+    auto& instruction2 = *it2;
+
+
+    if ((instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub) ||
+        instruction.getZasmInstruction().getOperand(0) !=
+        instruction2.getZasmInstruction().getOperand(0) ||
+        !instruction2.getZasmInstruction().getOperand(1).holds<zasm::Imm>())
+        return false;
+
+    printf("Found memory constant folding at count: %d\n", instruction.getCount());
+
+    uintptr_t immValue = instruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
+
+    immValue = immValue + calculateSubAdd({ instruction2.getZasmInstruction() });
+
+    instruction.getZasmInstruction().setOperand(1, zasm::Imm(immValue));
+    instruction.setOperand(1, new BaseOperand(zasm::Imm(immValue)));
+
+
+    printf("Generating new instruction: %d %s \n", instruction.getCount(),
+        formatInstruction(instruction.getZasmInstruction()).c_str());
+
+    instructions.erase(it2);
+    return false;
+}
+
 bool SimplifyConstantFolding::run(std::list<Instruction>::iterator it, std::list<Instruction>& instructions)
 {
 
@@ -275,6 +431,12 @@ bool SimplifyConstantFolding::run(std::list<Instruction>::iterator it, std::list
     if (foldSubAddConstant(it, instructions))
         return true;
     if (ReadWriteConstantFolding(it, instructions))
+        return true;
+    if (OptimizePass1(it, instructions))
+        return true;
+    if (OptimizePass2(it, instructions))
+        return true;
+    if (OptimizePass3(it, instructions))
         return true;
 
     return false;

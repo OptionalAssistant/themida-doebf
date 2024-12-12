@@ -58,5 +58,6 @@ zasm::InstructionDetail createPop(const zasm::Operand& op1, const zasm::Operand&
 
 zasm::InstructionDetail createPush(const zasm::Operand& op1, const zasm::Operand& op2, const zasm::Operand& op3);
 
+zasm::InstructionDetail createAdd(const zasm::Operand& op1, const zasm::Operand& op2);
 
 void printOutInstructions(std::list<Instruction>& instructins);

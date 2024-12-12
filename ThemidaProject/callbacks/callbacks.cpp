@@ -16,7 +16,11 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
     instruction.setAddress(address);
     instruction.setRegisterValues(cpu->getRegistersValues());
 
+    
+
     auto& operands = instruction.getOperands();
+
+
 
     for (int i = 0; i < operands.size(); i++) {
         auto& op = operands[i];
@@ -36,12 +40,12 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
     logger->log(toLog);
 
     data->instructions.push_back(instruction);
-    /*
-    if (countGlobal == 1000) {
-        cpu->stop_emu();
+    
+   /* if (countGlobal == 1000) {
+       cpu->stop_emu();
     }*/
 
-    if(address == 0x000000014002FAE3)
+    if(address == 0x000000014000D692)
         cpu->stop_emu();
 
     countGlobal++;

@@ -34,4 +34,15 @@ std::list<Instruction>::iterator getNextRegisterReadWriteOrWrite(std::list<Instr
     std::list<Instruction>::iterator itEnd,
     zasm::x86::Reg& foundReg);
 
+
+std::list<Instruction>::iterator getNextMemoryWrite(std::list<Instruction>::iterator itStart,
+    std::list<Instruction>::iterator itEnd, uintptr_t address);
+
+std::list<Instruction>::iterator getPrevMemoryWrite(std::list<Instruction>::iterator itStart,
+    std::list<Instruction>::iterator itEnd,
+ uintptr_t address);
+
+std::list<Instruction>::iterator getNextMemoryRead(std::list<Instruction>::iterator itStart,
+    std::list<Instruction>::iterator itEnd, uintptr_t address);
+
 bool isSameRegister( zasm::x86::Reg& reg1, zasm::x86::Reg& reg2);

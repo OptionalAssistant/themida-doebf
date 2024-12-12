@@ -2,7 +2,8 @@
 
 #include "HelpersIterations.h"
 #include "../../Instruction/Instruction.h"
-
+#include "../../utils/Logger.h"
+#include "../../utils/Utils.h"
 
 int64_t calculateSubAdd(std::vector<zasm::InstructionDetail > instructions) {
     int64_t result = 0;
@@ -27,6 +28,7 @@ std::list<Instruction>::iterator getNextRegisterAccess(std::list<Instruction>::i
         auto& instruction = *itStart;
 
         for (const auto& op : instruction.getZasmInstruction().getOperands()) {
+         
             if (op.holds<zasm::Reg>()) {
                 auto reg = op.get<zasm::Reg>();
                 if (isSameRegister(reg, foundReg)) {
@@ -63,7 +65,8 @@ std::list<Instruction>::iterator getNextRegisterRead(std::list<Instruction>::ite
             auto op = instruction.getZasmInstruction().getOperand(i);
 
             if (op.holds<zasm::Reg>() && isSameRegister(op.get<zasm::Reg>(), foundReg)) {
-                if (instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Read)
+                if (instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Read ||
+                    instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::ReadCondWrite)
                     return foundIt;
             }
             else if (op.holds<zasm::Mem>()) {
@@ -148,6 +151,75 @@ std::list<Instruction>::iterator getNextRegisterReadWriteOrWrite(std::list<Instr
                 if (instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::ReadWrite
                     || instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Write)
                     return foundIt;
+            }
+        }
+
+    }
+
+    return itEnd;
+}
+
+std::list<Instruction>::iterator getNextMemoryRead(std::list<Instruction>::iterator itStart,
+    std::list<Instruction>::iterator itEnd, uintptr_t address)
+{
+    for (; itStart != itEnd; itStart++) {
+        auto& instruction = *itStart;
+
+        for (int i = 0; i < instruction.getZasmInstruction().getOperandCount(); i++) {
+            auto& op = instruction.getZasmInstruction().getOperand(i);
+
+            if (op.holds<zasm::Mem>()) {
+                MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(instruction.getOperand(i));
+
+                if (memoryOperand->getMemoryAddress() == address &&
+                    instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Read)
+                    return itStart;
+            }
+        }
+
+    }
+
+    return itEnd;
+}
+
+
+std::list<Instruction>::iterator getNextMemoryWrite(std::list<Instruction>::iterator itStart, std::list<Instruction>::iterator itEnd, uintptr_t address)
+{
+    for (; itStart != itEnd; itStart++) {
+        auto& instruction = *itStart;
+
+        for (int i = 0; i < instruction.getZasmInstruction().getOperandCount(); i++) {
+            auto& op = instruction.getZasmInstruction().getOperand(i);
+
+            if (op.holds<zasm::Mem>()) {
+                MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(instruction.getOperand(i));
+
+                if (memoryOperand->getMemoryAddress() == address &&
+                    instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Write)
+                    return itStart;
+            }
+        }
+
+    }
+
+    return itEnd;
+}
+
+std::list<Instruction>::iterator getPrevMemoryWrite(std::list<Instruction>::iterator itStart,
+    std::list<Instruction>::iterator itEnd,uintptr_t address)
+{
+    for (; itStart != itEnd; itStart--) {
+        auto& instruction = *itStart;
+
+        for (int i = 0; i < instruction.getZasmInstruction().getOperandCount(); i++) {
+            auto& op = instruction.getZasmInstruction().getOperand(i);
+
+            if (op.holds<zasm::Mem>()) {
+                MemoryOperand* memoryOperand = dynamic_cast<MemoryOperand*>(instruction.getOperand(i));
+
+                if (memoryOperand->getMemoryAddress() == address &&
+                    instruction.getZasmInstruction().getOperandAccess(i) == zasm::detail::OperandAccess::Write)
+                    return itStart;
             }
         }
 

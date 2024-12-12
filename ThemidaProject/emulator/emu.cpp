@@ -1,6 +1,6 @@
 #include <limits>
 #include <bit>
-
+#include <immintrin.h>
 
 #include <zasm/formatter/formatter.hpp>
 
@@ -1556,6 +1556,374 @@ void EmulatorCPU::HandleCdq()
 	WriteResult(zasm::x86::edx, result);
 }
 
+void EmulatorCPU::HandleIMul()
+{
+	
+	WORD operandCount = 0;
+
+	for (int i = 0; i < instruction.getOperandCount(); i++) {
+		const auto& opVisibility = instruction.getOperandVisibility(i);
+
+		if (opVisibility == zasm::detail::OperandVisibility::Explicit)
+			operandCount++;
+	}
+
+	if (operandCount == 1)
+	{
+		if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_8) {
+			int8_t op1 = static_cast<int8_t>(reg_read(zasm::x86::al));
+
+			int8_t src = static_cast<int8_t>(GetValue(instruction.getOperand(0)));
+
+			int16_t result = static_cast<int16_t>(op1) * static_cast<int16_t>(src);
+
+			reg_write(zasm::x86::ax, result);
+
+			if (result != static_cast<int8_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_16) {
+			int16_t op1 = static_cast<int16_t>(reg_read(zasm::x86::ax));
+
+			int16_t src = static_cast<int16_t>(GetValue(instruction.getOperand(0)));
+
+			int32_t result = static_cast<int32_t>(op1) * static_cast<int32_t>(src);
+
+			int16_t high = result >> 16;
+			int16_t low = result & 0xFFFF;
+
+			reg_write(zasm::x86::dx, high);
+			reg_write(zasm::x86::ax, low);
+
+			if (result != static_cast<int16_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_32) {
+			int32_t op1 = static_cast<int32_t>(reg_read(zasm::x86::eax));
+
+			int32_t src = static_cast<int32_t>(GetValue(instruction.getOperand(0)));
+
+			int64_t result = static_cast<int64_t>(op1) * static_cast<int64_t>(src);
+
+			int32_t high = result >> 32;
+			int32_t low = result & 0xFFFFFFFF;
+
+			reg_write(zasm::x86::edx, high);
+			reg_write(zasm::x86::eax, low);
+
+			if (result != static_cast<int32_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else {
+			int64_t op1 = static_cast<int64_t>(reg_read(zasm::x86::rax));
+
+			int64_t src = static_cast<int64_t>(GetValue(instruction.getOperand(0)));
+
+			int64_t result = op1 * src;
+
+			int64_t high;
+			int64_t low;
+			low = _mul128(src, op1, &high);
+
+			reg_write(zasm::x86::rdx, high);
+			reg_write(zasm::x86::rax, low);
+
+			if (result > INT64_MAX || result < INT64_MIN) {//TODO how to check
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+	}
+	else if (operandCount == 2) {
+		if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_8) {
+			int8_t op1 = static_cast<int8_t>(GetValue(instruction.getOperand(0)));
+
+			int8_t src = static_cast<int8_t>(GetValue(instruction.getOperand(1)));
+
+			int16_t result = static_cast<int16_t>(op1) * static_cast<int16_t>(src);
+
+			WriteResult(instruction.getOperand(0), static_cast<int8_t>(result));
+
+			if (result != static_cast<int8_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_16) {
+			int16_t op1 = static_cast<int16_t>(GetValue(instruction.getOperand(0)));
+
+			int16_t src = static_cast<int16_t>(GetValue(instruction.getOperand(1)));
+
+			int32_t result = static_cast<int32_t>(op1) * static_cast<int32_t>(src);
+
+			WriteResult(instruction.getOperand(0), static_cast<int16_t>(result));
+
+			if (result != static_cast<int16_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_32) {
+			int32_t op1 = static_cast<int32_t>(GetValue(instruction.getOperand(0)));
+
+			int32_t src = static_cast<int32_t>(GetValue(instruction.getOperand(1)));
+
+			int64_t result = static_cast<int64_t>(op1) * static_cast<int64_t>(src);
+
+			WriteResult(instruction.getOperand(0), static_cast<int32_t>(result));
+
+			if (result != static_cast<int32_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else {
+			int64_t op1 = static_cast<int64_t>(GetValue(instruction.getOperand(0)));
+
+			int64_t src = static_cast<int64_t>(GetValue(instruction.getOperand(1)));
+
+			int64_t result = op1 * src;
+
+			int64_t high;
+			int64_t low;
+			low = _mul128(src, op1, &high);
+			
+			WriteResult(instruction.getOperand(0), low);
+
+			if (result > INT64_MAX || result < INT64_MIN) {//TODO how to check
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+	}
+	else if (operandCount == 3) {
+		if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_8) {
+			int8_t src1 = static_cast<int8_t>(GetValue(instruction.getOperand(1)));
+
+			int8_t src2 = static_cast<int8_t>(GetValue(instruction.getOperand(2)));
+
+			int16_t result = static_cast<int16_t>(src1) * static_cast<int16_t>(src2);
+
+			WriteResult(instruction.getOperand(0), static_cast<int8_t>(result));
+
+			if (result != static_cast<int8_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_16) {
+			int16_t src1 = static_cast<int16_t>(GetValue(instruction.getOperand(1)));
+
+			int16_t src2 = static_cast<int16_t>(GetValue(instruction.getOperand(2)));
+
+			int32_t result = static_cast<int32_t>(src1) * static_cast<int32_t>(src2);
+
+			WriteResult(instruction.getOperand(0), static_cast<int16_t>(result));
+
+			if (result != static_cast<int16_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else if (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64) == zasm::BitSize::_32) {
+			int32_t src1 = static_cast<int32_t>(GetValue(instruction.getOperand(1)));
+
+			int32_t src2 = static_cast<int32_t>(GetValue(instruction.getOperand(2)));
+
+			int64_t result = static_cast<int64_t>(src1) * static_cast<int64_t>(src2);
+
+			WriteResult(instruction.getOperand(0), static_cast<int32_t>(result));
+
+			if (result != static_cast<int32_t>(result)) {
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+		else {
+			int64_t src1 = static_cast<int64_t>(GetValue(instruction.getOperand(1)));
+
+			int64_t src2 = static_cast<int64_t>(GetValue(instruction.getOperand(2)));
+
+			int64_t result = src1 * src2;
+
+			int64_t high;
+			int64_t low;
+			low = _mul128(src2, src1, &high);
+
+			WriteResult(instruction.getOperand(0), low);
+
+			if (result > INT64_MAX || result < INT64_MIN) {//TODO how to check
+				SetCarryFlag();
+				SetOverflowFlag();
+			}
+			else {
+				ClearCarryFlag();
+				ClearOverflowFlag();
+			}
+		}
+	}
+	else
+		throw std::runtime_error("Invalid operand count while emulating imul");
+
+	printf("");
+}
+
+//TODO maybe wrong implementation
+void EmulatorCPU::HandleIDiv()
+{
+	switch (instruction.getOperand(0).getBitSize(zasm::MachineMode::AMD64))
+	{
+	case zasm::BitSize::_8:
+	{
+		int16_t destination = static_cast<int16_t>(reg_read(zasm::x86::ax));
+
+		int8_t divisor = static_cast<int8_t>(GetValue(instruction.getOperand(1)));
+
+		if (divisor == 0) {
+			throw std::runtime_error("Divide error: Division by zero");
+		}
+
+		int16_t quotient = destination / divisor;
+		int8_t remainder = destination % divisor;
+
+		if (quotient < INT8_MIN || quotient > INT8_MAX) {
+			throw std::runtime_error("Divide error: Quotient overflow");
+		}
+
+		reg_write(zasm::x86::al, static_cast<int8_t>(quotient));
+		reg_write(zasm::x86::ah, remainder);
+	}
+	break;
+	case zasm::BitSize::_16:
+	{
+		int32_t high = static_cast<int32_t>(reg_read(zasm::x86::dx)) << 16;
+		int32_t low = static_cast<int32_t>(reg_read(zasm::x86::ax));;
+
+		int32_t destination = high | low; // DX:AX
+
+		int16_t divisor = static_cast<int16_t>(GetValue(instruction.getOperand(1)));
+
+		if (divisor == 0) {
+			throw std::runtime_error("Divide error: Division by zero");
+		}
+
+		int32_t quotient = destination / divisor;
+		int16_t remainder = destination % divisor;
+
+		if (quotient < INT16_MIN || quotient > INT16_MAX) {
+			throw std::runtime_error("Divide error: Quotient overflow");
+		}
+
+		reg_write(zasm::x86::ax, static_cast<int16_t>(quotient));
+		reg_write(zasm::x86::dx, remainder);
+	}
+		break;
+	case zasm::BitSize::_32:
+	{
+		int64_t high = static_cast<int64_t>(reg_read(zasm::x86::edx)) << 32;
+		int64_t low = static_cast<int64_t>(reg_read(zasm::x86::eax));
+
+		int64_t destination = high | low; 
+
+		int32_t divisor = static_cast<int32_t>(GetValue(instruction.getOperand(1)));
+
+
+		if (divisor == 0) {
+			throw std::runtime_error("Divide error: Division by zero");
+		}
+	
+		int64_t  quotient = destination / divisor;
+		int32_t remainder = destination % divisor;
+
+		if (quotient < INT32_MIN || 
+			quotient > INT32_MAX) {
+			throw std::runtime_error("Divide error: Quotient overflow");
+		}
+
+		reg_write(zasm::x86::eax, static_cast<int32_t>(quotient));
+		reg_write(zasm::x86::edx, remainder);
+	}
+		break;
+	case zasm::BitSize::_64:
+	{
+		int64_t high = static_cast<int64_t>(reg_read(zasm::x86::rdx));
+		int64_t low = static_cast<int64_t>(reg_read(zasm::x86::rax));
+
+		int64_t divisor = static_cast<int64_t>(GetValue(instruction.getOperand(1)));
+
+
+		if (divisor == 0) {
+			throw std::runtime_error("Divide error: Division by zero");
+		}
+
+		int64_t remainder;
+		int64_t  quotient =  _div128(high, low, divisor, &remainder);
+		
+		if (quotient < INT64_MIN ||//TODO check if quotient is greater...type mismatch
+			quotient > INT64_MAX) {
+			throw std::runtime_error("Divide error: Quotient overflow");
+		}
+
+		reg_write(zasm::x86::rax,quotient);
+		reg_write(zasm::x86::rdx, remainder);
+	}
+		break;
+	default:
+		break;
+	}
+
+}
+
 void EmulatorCPU::SetCarryFlag()
 {
 	rFlags |= carryFlagMask;
@@ -1770,7 +2138,6 @@ uintptr_t EmulatorCPU::CalcMemAddress(const zasm::Mem& mem)
 		value = mem.getDisplacement() + eip;
 
 		return value ;
-		printf("\n");
 	}
 	else if (mem.getBase().getId() != zasm::Reg::Id::None)
 	{
@@ -1795,11 +2162,15 @@ uintptr_t EmulatorCPU::CalcMemAddress(const zasm::Mem& mem)
 
 uintptr_t EmulatorCPU::CalcEffectiveMemAddress(const zasm::Operand& op,uintptr_t i)
 {
-	if (instruction.getMnemonic() != zasm::x86::Mnemonic::Call ||
-		instruction.getMnemonic() != zasm::x86::Mnemonic::Movsb)
+	if (instruction.getMnemonic() != zasm::x86::Mnemonic::Movsb)
 	{
 		uintptr_t address;
-		if (instruction.getMnemonic() == zasm::x86::Mnemonic::Push)
+		if (instruction.getMnemonic() == zasm::x86::Mnemonic::Call) {
+			address = CalcMemAddress(op.get<zasm::Mem>());
+
+			address = address - 8;
+		}
+		else if (instruction.getMnemonic() == zasm::x86::Mnemonic::Push)
 		{
 			address = CalcMemAddress(op.get<zasm::Mem>());
 
@@ -2303,6 +2674,12 @@ void EmulatorCPU::run(uintptr_t rva)
 			break;
 		case zasm::x86::Mnemonic::Cmovo:
 			HandleCmovo();
+			break;
+		case zasm::x86::Mnemonic::Imul:
+			HandleIMul();
+			break;
+		case zasm::x86::Mnemonic::Idiv:
+			HandleIDiv();
 			break;
 		default:
 			printf("FAILED");

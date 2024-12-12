@@ -396,6 +396,26 @@ zasm::InstructionDetail createPush(const zasm::Operand& op1,
 		ops, opAccess, opVisibility, {}, {});
 }
 
+zasm::InstructionDetail createAdd(const zasm::Operand& op1, const zasm::Operand& op2)
+{
+	zasm::InstructionDetail::OperandsAccess opAccess;
+	zasm::InstructionDetail::OperandsVisibility opVisibility;
+
+	opAccess.set(0, zasm::Operand::Access::ReadWrite);
+	opAccess.set(1, zasm::Operand::Access::Read);
+
+	opVisibility.set(0, zasm::Operand::Visibility::Explicit);
+	opVisibility.set(1, zasm::Operand::Visibility::Explicit);
+
+	std::array<zasm::Operand, 10>ops;
+	ops[0] = op1;
+	ops[1] = op2;
+
+	return  zasm::InstructionDetail({},
+		zasm::x86::Mnemonic::Add, 2,
+		ops, opAccess, opVisibility, {}, {});
+}
+
 void printOutInstructions(std::list<Instruction>& instructions)
 {
 	for (auto& instruction : instructions) {
