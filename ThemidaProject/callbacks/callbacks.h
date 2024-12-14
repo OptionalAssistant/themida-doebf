@@ -6,9 +6,8 @@
 
 class EmulatorCPU;
 class Instruction;
+struct BasicBlock;
 
-struct UserData {
-    std::list<Instruction> instructions;
-};
+
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction,
     void* user_data);

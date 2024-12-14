@@ -2,7 +2,8 @@
 #include <vector>
 #include <Windows.h>
 #include <zasm/zasm.hpp>
-
+#include <list>
+inline uintptr_t bbCount = 0;
 class BaseOperand {
 private:
 	zasm::Operand operand;
@@ -63,3 +64,13 @@ public:
 	void setRFlags(WORD flags);
 };
 
+
+struct BasicBlock {
+	uintptr_t count;
+	BasicBlock* pass1;
+	BasicBlock* pass2;
+
+	BasicBlock() : pass1(nullptr), pass2(nullptr),count(bbCount++) {}
+
+	std::list<Instruction>instructions;
+};

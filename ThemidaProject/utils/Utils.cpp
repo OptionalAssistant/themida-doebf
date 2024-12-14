@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <format>
+#include <unordered_set>
 #include <zasm/formatter/formatter.hpp>
 
 #include "../Instruction/Instruction.h"
@@ -416,12 +417,91 @@ zasm::InstructionDetail createAdd(const zasm::Operand& op1, const zasm::Operand&
 		ops, opAccess, opVisibility, {}, {});
 }
 
-void printOutInstructions(std::list<Instruction>& instructions)
-{
+void printOutInstructionsHelper(BasicBlock* bb, std::unordered_set<BasicBlock*>& visited) {
+	
+	if (!bb || visited.count(bb)) return;  // Skip null or already visited blocks
+
+	visited.insert(bb);  // Mark the current block as visited
+
+	// Log instructions in the current block
+	auto& instructions = bb->instructions;
+	std::string toLog = std::format("Label: {:d}: \n", bb->count);
+	if (bb->pass1)
+		toLog += std::format("Pass 1 : {:d}: \n", bb->pass1->count);
+	if (bb->pass2)
+		toLog += std::format("Pass 2 : {:d}: \n", bb->pass2->count);
+
 	for (auto& instruction : instructions) {
-		std::string toLog = std::format("Rva:0x{:x} count : {:d} | {} --\n",
+		 toLog += std::format("Rva:0x{:x} count : {:d} | {} --\n",
 			instruction.getAddress(),
-			instruction.getCount(), formatInstruction_(instruction));
-		logger->log(toLog);
+			instruction.getCount(),
+			formatInstruction_(instruction));
 	}
+	logger->log(toLog);
+	printf("%s\n", toLog.c_str());
+	//logger->log("\nNew basic block\n\n");
+	// Recursively process child blocks
+	printOutInstructionsHelper(bb->pass1, visited);
+	printOutInstructionsHelper(bb->pass2, visited);
 }
+void printOutInstructions(BasicBlock* bb)
+{
+	std::unordered_set<BasicBlock*> visited;
+	printOutInstructionsHelper(bb,visited);
+
+}
+
+void getReferenceCountHelper(BasicBlock* bb, BasicBlock* referencedBasicBlock,
+	std::unordered_set<BasicBlock*>& visited,uintptr_t& count) {
+	if (!bb || visited.count(bb))return;
+
+	visited.insert(bb);
+
+	if (bb->pass1 == referencedBasicBlock)
+		count++;
+	if (bb->pass2 == referencedBasicBlock)
+		count++;
+
+	getReferenceCountHelper(bb->pass1, referencedBasicBlock, visited, count);
+	getReferenceCountHelper(bb->pass2, referencedBasicBlock, visited, count);
+}
+uintptr_t getReferenceCount(BasicBlock* bb, BasicBlock* referencedBasicBlock) {
+
+	std::unordered_set<BasicBlock*> visited;
+	uintptr_t count = 0;
+    getReferenceCountHelper(bb, referencedBasicBlock, visited,count);
+	return count;
+}
+
+BasicBlock* FindAddressBasicBlockHelper(BasicBlock* bb, uintptr_t findAddress,
+	std::unordered_set<BasicBlock*>& visited) {
+
+
+	if (!bb || visited.count(bb))return nullptr;
+
+	visited.insert(bb);
+
+	for (auto it = bb->instructions.begin(); it != bb->instructions.end(); it++) {
+		auto& instruction = *it;
+
+		if (instruction.getAddress() == findAddress) {
+			return bb;
+		}
+		else
+			printf("");
+	}
+
+	BasicBlock* foundInPass1 = FindAddressBasicBlockHelper(bb->pass1, findAddress,visited);
+
+	if (foundInPass1)return foundInPass1;
+
+	return FindAddressBasicBlockHelper(bb->pass2, findAddress,visited);
+}
+
+BasicBlock* FindAddressBasicBlock(BasicBlock* bb, uintptr_t findAddress)
+{
+	std::unordered_set<BasicBlock*> visited;  // Track visited blocks
+	return FindAddressBasicBlockHelper(bb, findAddress, visited);
+}
+
+

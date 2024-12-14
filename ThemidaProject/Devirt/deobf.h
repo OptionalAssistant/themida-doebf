@@ -4,12 +4,17 @@
 class EmulatorCPU;
 class PE;
 
+
 class deobf
 {
 private:
 	EmulatorCPU* m_cpu;
 	PE* m_pe;
 	Optimizer* optimizer;
+
+	void captureTrace(uintptr_t rva, BasicBlock* bb);
+	void transverseBlock(uintptr_t rva, BasicBlock* bb);
+	BasicBlock* handleBBIntersection(uintptr_t address);
 public:
 	deobf(EmulatorCPU* cpu_, PE* pe) : m_cpu(cpu_), m_pe(pe), optimizer(new Optimizer()) {}
 

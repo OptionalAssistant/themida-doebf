@@ -140,7 +140,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Optimization\Helpers\HelpersIterations.cpp" />
-    <ClCompile Include="Helpers\Helpers.cpp" />
     <ClCompile Include="Instruction\Instruction.cpp" />
     <ClCompile Include="Optimization\BaseOptimization.cpp" />
     <ClCompile Include="callbacks\callbacks.cpp" />
@@ -158,7 +157,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Optimization\Helpers\HelpersIterations.h" />
-    <ClInclude Include="Helpers\Helpers.h" />
     <ClInclude Include="Instruction\Instruction.h" />
     <ClInclude Include="Optimization\BaseOptimization.h" />
     <ClInclude Include="callbacks\callbacks.h" />

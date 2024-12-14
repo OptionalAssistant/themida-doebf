@@ -12,6 +12,7 @@ class Instruction;
 class MemoryOperand;
 class Operand;
 enum class OperandAction;
+struct BasicBlock;
 
 static inline constexpr WORD carryFlagMask = 1;
 static inline constexpr WORD parityFlagMask = 4;
@@ -20,6 +21,23 @@ static inline constexpr WORD zeroFlagMask = 0x40;
 static inline constexpr WORD signFlagMask = 0x80;
 static inline constexpr WORD overflowFlagMask = 0x800;
 
+namespace globals {
+    inline static constexpr uintptr_t sectionBase = 0x000000014000A000;
+    inline static constexpr uintptr_t sectionSize = 0x0000000000064000;
+    
+    inline BasicBlock* bb;
+}
+
+
+
+
+enum class ReasonStop {
+    JCC,
+    UNCOND_TRANSFER,
+    EXIT_EXTERNAL,
+    VISITED
+};
+inline ReasonStop reasonStop;
 
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin);
 
@@ -60,4 +78,9 @@ zasm::InstructionDetail createPush(const zasm::Operand& op1, const zasm::Operand
 
 zasm::InstructionDetail createAdd(const zasm::Operand& op1, const zasm::Operand& op2);
 
-void printOutInstructions(std::list<Instruction>& instructins);
+void printOutInstructions(BasicBlock* bb);
+
+
+BasicBlock* FindAddressBasicBlock(BasicBlock* bb,uintptr_t findAddress);
+
+uintptr_t getReferenceCount(BasicBlock* bb, BasicBlock* referencedBasicBlock);

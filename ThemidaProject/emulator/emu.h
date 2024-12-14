@@ -38,6 +38,8 @@ private:
 	zasm::Decoder* decoder;
 	
 	bool isStop;
+	bool isStopBefore;
+	bool isStopAfter;
 
 	std::vector<callbackStruct>callbacks;
 
@@ -200,12 +202,17 @@ public:
 
 	uintptr_t reg_read( zasm::Reg reg);
 
+	void setEip(uintptr_t eip);
+	uintptr_t getEip();
+
 	std::array<uintptr_t, 17> getRegistersValues();
 
 	void addCallback(callbackFunction callback, void* userData = nullptr);
 	void removeCallback(callbackFunction callbackDelete);
 
 	void stop_emu();
+	void stop_emu_after();
+	void stop_emu_before();
 
 	uintptr_t CalcMemAddress(const zasm::Mem& mem);
 	uintptr_t CalcEffectiveMemAddress(const zasm::Operand& op, uintptr_t i);

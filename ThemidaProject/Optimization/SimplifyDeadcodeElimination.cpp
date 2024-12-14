@@ -184,8 +184,8 @@ bool SimplifyDeadcodeElimination::run(std::list<Instruction>::iterator it, std::
         return true;
     if (OptimizeWriteBeforeRead(it, instructions))
         return true;
-    if (RemoveJumpsZero(it, instructions))
-        return true;
+    //if (RemoveJumpsZero(it, instructions))
+    //    return true;
     if (RemoveDeadMemoryPushWrite(it, instructions))
         return true;
     if (OptimizePass1(it, instructions))

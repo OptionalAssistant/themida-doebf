@@ -55,6 +55,7 @@ void EmulatorCPU::HandlePush()
 
 void EmulatorCPU::HandleCall()
 {
+
 	uintptr_t ret_addr = eip + 5;
 
 	eip += instruction.getOperand(0).get<zasm::Imm>().value<int>();
@@ -2096,14 +2097,18 @@ uintptr_t EmulatorCPU::mem_read(uintptr_t address,void* bytes ,uintptr_t size)
 
 	if (!mr) {
 		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
+		return 0;
 	}
 	
 	if (address + size > mr->address + mr->size) {
 		throw std::runtime_error("Memory read out of region");
+		return 0;
 	}
 
 	void* address_ = (void*)(mr->memory.data() + address - mr->address);
 	memcpy(bytes, (void*)(mr->memory.data() + address - mr->address), size);
+
+	return 0;
 }
 
 void EmulatorCPU::mem_write(uintptr_t address,const void* bytes,uintptr_t size)
@@ -2118,11 +2123,14 @@ void EmulatorCPU::mem_write(uintptr_t address,const void* bytes,uintptr_t size)
 		}
 	}
 
-	if(!mr)
+	if (!mr) {
 		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
+		return;
+	}
 	
 	if (address + size > mr->address + mr->size) {
 		throw std::runtime_error("Memory write out of region");
+		return;
 	}
 
 	void* address_ = (void*)(mr->memory.data() + address - mr->address);
@@ -2396,22 +2404,25 @@ void EmulatorCPU::update_eflags(uintptr_t dst,uintptr_t dst_old,uintptr_t src1,
 
 }*/
 
-void EmulatorCPU::run(uintptr_t rva)
+void EmulatorCPU::run(uintptr_t entryPoint)
 {
 	
 	isStop = false;
+	isStopAfter = false;
+	isStopBefore = false;
 
-	eip = baseImage + rva;
+	eip = entryPoint;
 	count = 0;
 	while (true) {
 
 		uintptr_t realone = from_virtual_to_real(eip);
 
+
 		auto res = decoder->decode((void*)realone, ZYDIS_MAX_INSTRUCTION_LENGTH, 0x0);
 
 		if (!res.hasValue())
 		{
-			printf("Failed to disassemble instruction at address:0x%llx\n", rva);
+			printf("Failed to disassemble instruction at address:0x%llx\n", eip);
 			exit(0);
 		}
 		instruction  = res.value();
@@ -2419,6 +2430,9 @@ void EmulatorCPU::run(uintptr_t rva)
 		for (auto& callback : callbacks) {
 			callback.callback_fn(this,eip,instruction,callback.callback_data);
 		}
+		
+		if (isStop || isStopBefore)
+			return;
 
 		switch (instruction.getMnemonic())
 		{
@@ -2681,6 +2695,11 @@ void EmulatorCPU::run(uintptr_t rva)
 		case zasm::x86::Mnemonic::Idiv:
 			HandleIDiv();
 			break;
+		case zasm::x86::Mnemonic::Pause:
+			break;
+		case zasm::x86::Mnemonic::Xorps:
+		case zasm::x86::Mnemonic::Movups:
+			break;
 		default:
 			printf("FAILED");
 			exit(0);
@@ -2688,9 +2707,8 @@ void EmulatorCPU::run(uintptr_t rva)
 		}
 		count++;
 		eip += instruction.getLength();
-		rva = eip - (uintptr_t)data.data();
 
-		if (isStop)
+		if (isStop || isStopAfter)
 			return;
 	}
 	
@@ -2716,6 +2734,16 @@ uintptr_t EmulatorCPU::reg_read( zasm::Reg reg)
 	return reg_read_(regs, reg,rFlags);
 }
 
+void EmulatorCPU::setEip(uintptr_t eip)
+{
+	this->eip = eip;
+}
+
+uintptr_t EmulatorCPU::getEip()
+{
+	return eip;
+}
+
 std::array<uintptr_t, 17> EmulatorCPU::getRegistersValues()
 {
 	return regs;
@@ -2739,6 +2767,16 @@ void EmulatorCPU::removeCallback(callbackFunction callbackDelete)
 void EmulatorCPU::stop_emu()
 {
 	isStop = true;
+}
+
+void EmulatorCPU::stop_emu_after()
+{
+	this->isStopAfter = true;
+}
+
+void EmulatorCPU::stop_emu_before()
+{
+	this->isStopBefore = true;
 }
 
 bool EmulatorCPU::mem_map(uintptr_t address, uintptr_t size)

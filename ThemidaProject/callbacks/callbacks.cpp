@@ -10,13 +10,24 @@
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
     void* user_data) {
 
-    UserData* data = static_cast<UserData*>(user_data);
+    BasicBlock* foundBasicBlock = FindAddressBasicBlock(globals::bb, address);
+
+    std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",
+        address, countGlobal, formatInstruction(instruction_));
+    logger->log(toLog);
+
+
+    if (foundBasicBlock) {
+        printf("Intersection BB found at address : 0x%llx\n",address);
+        reasonStop = ReasonStop::VISITED;
+        cpu->stop_emu_before();
+        return false;
+    }
+    BasicBlock* bb = static_cast<BasicBlock*>(user_data);
     Instruction instruction = zasmToInstruction(instruction_);
     instruction.setCount(countGlobal);
     instruction.setAddress(address);
     instruction.setRegisterValues(cpu->getRegistersValues());
-
-    
 
     auto& operands = instruction.getOperands();
 
@@ -35,21 +46,36 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
         op->setOperandAccess(instruction_.getOperandAccess(i));
     }
 
-    std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",
-        address, instruction.getCount(), formatInstruction_(instruction));
-    logger->log(toLog);
 
-    data->instructions.push_back(instruction);
-    
-   /* if (countGlobal == 1000) {
-       cpu->stop_emu();
-    }*/
-
-    if(address == 0x000000014000D692)
-        cpu->stop_emu();
+    bb->instructions.push_back(instruction);
 
     countGlobal++;
 
-    return true;
+    if (instruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Call &&
+        instruction.getZasmInstruction().getOperand(0).holds<zasm::Mem>()) {
+        reasonStop = ReasonStop::UNCOND_TRANSFER;
+        cpu->stop_emu_before();
+    }
+    else if (instruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Jmp ||
+        instruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Call ||
+        instruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Ret){
 
+        printf("Found jmp/call/ret instruction at eip : 0x%llx\n", cpu->getEip());
+        reasonStop = ReasonStop::UNCOND_TRANSFER;
+        cpu->stop_emu_after();
+    }
+    else if (cpu->getEip() < globals::sectionBase || cpu->getEip() > globals::sectionBase + globals::sectionSize) {
+        printf("Found exit from obfuscation section at eip : 0x%llx\n", cpu->getEip());
+        reasonStop = ReasonStop::UNCOND_TRANSFER;
+        cpu->stop_emu_before();
+    }
+    else if (instruction.getZasmInstruction().getMnemonic() >= zasm::x86::Mnemonic::Jb &&
+        instruction.getZasmInstruction().getMnemonic() <= zasm::x86::Mnemonic::Jz &&
+        instruction.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Jmp) {
+        printf("Found jcc jump at eip: 0x%llx\n", cpu->getEip());
+        reasonStop = ReasonStop::JCC;
+        cpu->stop_emu_before();
+    }
+
+    return true;
 }

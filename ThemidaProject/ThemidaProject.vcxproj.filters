@@ -45,9 +45,6 @@
     <ClCompile Include="Instruction\Instruction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Helpers\Helpers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Optimization\SimplifyStackOperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,9 +87,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Instruction\Instruction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Helpers\Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Optimization\SimplifyStackOperation.h">
