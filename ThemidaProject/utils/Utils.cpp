@@ -425,7 +425,7 @@ void printOutInstructionsHelper(BasicBlock* bb, std::unordered_set<BasicBlock*>&
 
 	// Log instructions in the current block
 	auto& instructions = bb->instructions;
-	std::string toLog = std::format("Label: {:d}: \n", bb->count);
+	std::string toLog = std::format("\nLabel: {:d}: \n", bb->count);
 	if (bb->pass1)
 		toLog += std::format("Pass 1 : {:d}: \n", bb->pass1->count);
 	if (bb->pass2)

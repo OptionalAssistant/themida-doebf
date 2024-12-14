@@ -10,6 +10,8 @@
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
     void* user_data) {
 
+    if (address == 0x140040d53)        printf("");
+
     BasicBlock* foundBasicBlock = FindAddressBasicBlock(globals::bb, address);
 
     std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",

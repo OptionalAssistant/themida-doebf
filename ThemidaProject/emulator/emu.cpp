@@ -2096,13 +2096,13 @@ uintptr_t EmulatorCPU::mem_read(uintptr_t address,void* bytes ,uintptr_t size)
 	}
 
 	if (!mr) {
-		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
 		return 0;
+		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
 	}
 	
 	if (address + size > mr->address + mr->size) {
-		throw std::runtime_error("Memory read out of region");
 		return 0;
+		throw std::runtime_error("Memory read out of region");
 	}
 
 	void* address_ = (void*)(mr->memory.data() + address - mr->address);
@@ -2113,7 +2113,7 @@ uintptr_t EmulatorCPU::mem_read(uintptr_t address,void* bytes ,uintptr_t size)
 
 void EmulatorCPU::mem_write(uintptr_t address,const void* bytes,uintptr_t size)
 {
-
+	
 	MemoryRegion* mr = nullptr;
 	
 	for (auto& memRegion : memory_regions) {
@@ -2124,13 +2124,13 @@ void EmulatorCPU::mem_write(uintptr_t address,const void* bytes,uintptr_t size)
 	}
 
 	if (!mr) {
-		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
 		return;
+		throw std::runtime_error("Invalid memory write(Memory regions does not exist)");
 	}
 	
 	if (address + size > mr->address + mr->size) {
-		throw std::runtime_error("Memory write out of region");
 		return;
+		throw std::runtime_error("Memory write out of region");
 	}
 
 	void* address_ = (void*)(mr->memory.data() + address - mr->address);
@@ -2699,6 +2699,9 @@ void EmulatorCPU::run(uintptr_t entryPoint)
 			break;
 		case zasm::x86::Mnemonic::Xorps:
 		case zasm::x86::Mnemonic::Movups:
+		case zasm::x86::Mnemonic::Nop:
+		case zasm::x86::Mnemonic::Int3:
+		case zasm::x86::Mnemonic::Mul:
 			break;
 		default:
 			printf("FAILED");

@@ -67,7 +67,7 @@ void deobf::transverseBlock(uintptr_t rva,BasicBlock* bb)
 			newEip = m_cpu->getEip() + lastInstruction.getZasmInstruction().getLength();
 		}
 		else if (newEip < globals::sectionBase || newEip > globals::sectionBase + globals::sectionSize) {
-			if (lastInstruction.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Jmp) {
+			if (lastInstruction.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Call) {
 				printf("End at address : 0x%llx\n", lastInstruction.getAddress());
 				return;
 			}

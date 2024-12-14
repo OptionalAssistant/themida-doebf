@@ -10,7 +10,7 @@
 int main()
 {
     logger = new Logger("D:\\log.txt");
-    std::string path = "C:\\Users\\U1\\source\\repos\\ConsoleApplication6\\x64\\Release\\ConsoleApplication6_protected1221.exe";
+    std::string path = "C:\\Users\\U1\\source\\repos\\ConsoleApplication7\\x64\\Release\\ConsoleApplication7_protected.exe";
 
     std::vector<BYTE>data;
     if (!ReadFile(path, data))
@@ -45,7 +45,7 @@ int main()
     
     deobf* devirt = new deobf(&cpu, binary);
 
-    devirt->run(EmulatorCPU::baseImage + 0x2A1A2);
-    //2A1A2 0x2A19D
+    devirt->run(EmulatorCPU::baseImage + 0xB9AF);
+    //2A1A2 0x2A19D 0xB9AA B9AF
    
 }
