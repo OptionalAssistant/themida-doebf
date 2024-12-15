@@ -45,7 +45,7 @@ int main()
     
     deobf* devirt = new deobf(&cpu, binary);
 
-    devirt->run(EmulatorCPU::baseImage + 0xDE6C00);
-    //2A1A2 0x2A19D 0xB9AA B9AF
+    devirt->run(EmulatorCPU::baseImage + 0xD4DA31);
+    //16581CD 0x16581C8 C35EE0
    
 }

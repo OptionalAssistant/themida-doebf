@@ -390,11 +390,11 @@ static bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruc
 
     auto& op1 = instruction1.getZasmInstruction().getOperand(0).get<zasm::Reg>();
     auto& instruction2 = *it2;
-
+    
     if ((instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Mov &&
         instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Xor) ||
         !instruction2.getZasmInstruction().getOperand(0).holds<zasm::Reg>() ||
-        instruction2.getZasmInstruction().getOperand(0).get<zasm::Reg>() != op1) {
+        !isSameRegister(instruction2.getZasmInstruction().getOperand(0).get<zasm::Reg>(), op1)) {
         return false;
     }
 
@@ -412,7 +412,8 @@ static bool OptimizePass4(std::list<Instruction>::iterator it, std::list<Instruc
         (instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() < 8 &&
         instruction3.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() == zasm::x86::rsp) ||
         !instruction3.getZasmInstruction().getOperand(1).holds<zasm::Reg>() ||
-        instruction3.getZasmInstruction().getOperand(1).get<zasm::Reg>() != op1) {
+        instruction3.getZasmInstruction().getOperand(1).get<zasm::Reg>() != 
+        instruction2.getZasmInstruction().getOperand(0).get<zasm::Reg>()) {
         return false;
     }
 
@@ -707,7 +708,7 @@ static bool OptimizePass6(std::list<Instruction>::iterator it, std::list<Instruc
 /*
 push r13 --
 mov qword ptr ss:[rsp+0x08], 0x00000038 --
-pop r13 -- Fuck this pass.....Needed.....
+pop rax -- Fuck this pass.....Needed.....
 */
 static bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
     auto& instruction1 = *it;
@@ -725,7 +726,8 @@ static bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruc
     auto& instruction2 = *it2;
 
     if (!instruction2.getZasmInstruction().getOperand(0).holds<zasm::Mem>() ||
-        instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() < 8 ||
+        (instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() != 8 &&
+            instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement() != 2) ||
         instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBase() != zasm::x86::rsp ||
         instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getIndex().getId() != zasm::x86::Reg::Id::None ||
         instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Push ||
@@ -753,7 +755,8 @@ static bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruc
 
     auto disp = instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement();
 
-    instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().setDisplacement(disp - 8);
+    instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().
+        setDisplacement(disp - instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getDisplacement());
 
 
     auto newZasmInstruction2 = createMov(instruction3.getZasmInstruction().getOperand(0),
@@ -768,13 +771,13 @@ static bool OptimizePass7(std::list<Instruction>::iterator it, std::list<Instruc
 
     newInstruction2.setCount(countGlobal++);
 
- /*   printf("Generated new instruction: %s count: %d\n",
+    printf("Generated new instruction: %s count: %d\n",
         formatInstruction(newInstruction2.getZasmInstruction()).c_str(),
         newInstruction2.getCount());
 
     printf("Generated new instruction(2): %s count: %d\n",
         formatInstruction(instruction2.getZasmInstruction()).c_str(),
-        instruction2.getCount());*/
+        instruction2.getCount());
 
   
     instructions.insert(it3, newInstruction2);

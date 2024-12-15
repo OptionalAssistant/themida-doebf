@@ -70,7 +70,8 @@ static bool MovMemAddRspToPop(std::list<Instruction>::iterator it, std::list<Ins
         !nextInstruction.getZasmInstruction().getOperand(0).holds<zasm::Reg>() ||
         nextInstruction.getZasmInstruction().getOperand(0).get<zasm::Reg>() != zasm::x86::rsp ||
         !nextInstruction.getZasmInstruction().getOperand(1).holds<zasm::Imm>() ||
-        nextInstruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>() < 8) {
+        (nextInstruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>() != 8 &&
+            nextInstruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>() != 2)) {
         return false;
     }
     uintptr_t immValue = nextInstruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
@@ -91,7 +92,7 @@ static bool MovMemAddRspToPop(std::list<Instruction>::iterator it, std::list<Ins
 
     newInstruction.setCount(countGlobal++);
 
-    immValue -= 8;
+    immValue -= nextInstruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
     nextInstruction.getZasmInstruction().setOperand(1, zasm::Imm(immValue));
     nextInstruction.setOperand(1, new BaseOperand(zasm::Imm(immValue)));
 
@@ -273,6 +274,10 @@ static bool OptimizePass1(std::list<Instruction>::iterator it, std::list<Instruc
 
         newZasmInstruction2 = createMov(gpRegister2.r32(),
             gpRegister1.r32());
+    }
+    else if (instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBitSize() == zasm::BitSize::_16) {
+        newZasmInstruction2 = createMov(instruction3.getZasmInstruction().getOperand(0),
+            instruction1.getZasmInstruction().getOperand(0));
     }
     else {
         throw std::runtime_error("Error during iptimization wtf consider different variations");

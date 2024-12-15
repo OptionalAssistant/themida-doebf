@@ -10,7 +10,7 @@
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
     void* user_data) {
 
-    if (address == EmulatorCPU::baseImage + 0x114c501)      
+    if (countGlobal == 638 || countGlobal == 632)
         printf("");
 
     BasicBlock* foundBasicBlock = FindAddressBasicBlock(globals::bb, address);

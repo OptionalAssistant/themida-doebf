@@ -2702,10 +2702,11 @@ void EmulatorCPU::run(uintptr_t entryPoint)
 		case zasm::x86::Mnemonic::Nop:
 		case zasm::x86::Mnemonic::Int3:
 		case zasm::x86::Mnemonic::Mul:
+		case zasm::x86::Mnemonic::Movdqa:
+		case zasm::x86::Mnemonic::Movdqu:
 			break;
 		default:
-			printf("FAILED");
-			exit(0);
+			break;
 			break;
 		}
 		count++;
