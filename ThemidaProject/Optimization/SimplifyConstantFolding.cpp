@@ -400,18 +400,47 @@ static bool OptimizePass3(std::list<Instruction>::iterator it, std::list<Instruc
 
 
     if ((instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Add &&
-        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub) ||
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Sub &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Xor &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Or &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Not &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Shr &&
+        instruction2.getZasmInstruction().getMnemonic() != zasm::x86::Mnemonic::Dec) ||
         instruction.getZasmInstruction().getOperand(0) !=
-        instruction2.getZasmInstruction().getOperand(0) ||
+        instruction2.getZasmInstruction().getOperand(0))
+        return false;
+
+    if ((instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Add ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Sub ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Xor ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Or || 
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Shr) &&
         !instruction2.getZasmInstruction().getOperand(1).holds<zasm::Imm>())
         return false;
 
     printf("Found memory constant folding at count: %d\n", instruction.getCount());
 
     uintptr_t immValue = instruction.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
-
-    immValue = immValue + calculateSubAdd({ instruction2.getZasmInstruction() });
-
+    
+    if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Sub ||
+        instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Add) {
+        immValue = immValue + calculateSubAdd({ instruction2.getZasmInstruction() });
+    }
+    else if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Xor) {
+        immValue = immValue ^ instruction2.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
+    }
+    else if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Or) {
+        immValue = immValue | instruction2.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
+    }
+    else if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Not) {
+        immValue = ~immValue;
+    }
+    else if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Shr) {
+        immValue = immValue >> instruction2.getZasmInstruction().getOperand(1).get<zasm::Imm>().value<uintptr_t>();
+    }
+    else if (instruction2.getZasmInstruction().getMnemonic() == zasm::x86::Mnemonic::Dec) {
+        immValue = --immValue;
+    }
     instruction.getZasmInstruction().setOperand(1, zasm::Imm(immValue));
     instruction.setOperand(1, new BaseOperand(zasm::Imm(immValue)));
 

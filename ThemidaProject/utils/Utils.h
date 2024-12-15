@@ -22,9 +22,12 @@ static inline constexpr WORD signFlagMask = 0x80;
 static inline constexpr WORD overflowFlagMask = 0x800;
 
 namespace globals {
-    inline static constexpr uintptr_t sectionBase = 0x000000014000A000;
-    inline static constexpr uintptr_t sectionSize = 0x0000000000064000;
     
+    inline static constexpr uintptr_t sectionBase = 0x00000001401FB000;
+    inline static constexpr uint64_t sectionSize = 0x0000000001DE2000;
+   
+   /* inline static constexpr uintptr_t sectionBase = 0x000000014000A000;
+    inline static constexpr uint64_t sectionSize = 0x0000000000064000;*/
     inline BasicBlock* bb;
 }
 

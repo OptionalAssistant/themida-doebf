@@ -237,6 +237,25 @@ static bool OptimizePass1(std::list<Instruction>::iterator it, std::list<Instruc
         return false;
     }
 
+    if (instruction1.getZasmInstruction().getOperand(0) ==
+        instruction3.getZasmInstruction().getOperand(0)) {
+        if (instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBitSize() == zasm::BitSize::_64) {
+            instruction2.getZasmInstruction().setOperand(0, instruction1.getZasmInstruction().getOperand(0));
+        }
+        else if (instruction2.getZasmInstruction().getOperand(0).get<zasm::Mem>().getBitSize() == zasm::BitSize::_32) {
+
+            auto& gpRegister1 = instruction1.getZasmInstruction().getOperand(0).get<zasm::Reg>().as<zasm::x86::Gp>();
+            auto& gpRegister2 = instruction3.getZasmInstruction().getOperand(0).get<zasm::Reg>().as<zasm::x86::Gp>();
+
+            instruction2.getZasmInstruction().setOperand(0, gpRegister1.r32());
+        }
+        else
+            throw std::runtime_error("Unknown error....\n");
+
+        instructions.erase(it);
+        instructions.erase(it3);
+        return true;
+    }
 
   /*  printf("Found unopyimize operation throgh push pop and op between: %s count: %d\n",
         formatInstruction(instruction1.getZasmInstruction()).c_str(),
