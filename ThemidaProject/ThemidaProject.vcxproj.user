@@ -3,4 +3,12 @@
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommandArguments>-b C:\Users\User1\source\repos\ConsoleApplication2\x64\Release\ConsoleApplication2_protected.exe -o D:\log2.txt -rva 0x2D7CE -sectionSize 0x0000000000057000 -sectionStart 0x8000</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>-b C:\Users\User1\source\repos\ConsoleApplication2\x64\Release\ConsoleApplication2_protected.exe -o D:\log2.txt -rva 0x2D7CE -sectionSize 0x0000000000057000 -sectionStart 0x8000</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

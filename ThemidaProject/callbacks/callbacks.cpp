@@ -10,14 +10,11 @@
 bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
     void* user_data) {
 
-    if (countGlobal == 638 || countGlobal == 632)
-        printf("");
-
     BasicBlock* foundBasicBlock = FindAddressBasicBlock(globals::bb, address);
 
-    std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",
-        address - EmulatorCPU::baseImage, countGlobal, formatInstruction(instruction_));
-    logger->log(toLog);
+    //std::string toLog = std::format("Trying to emulate instruction at rva:0x{:x} count : {:d} | {} \n",
+    //    address - EmulatorCPU::baseImage, countGlobal, formatInstruction(instruction_));
+    //logger->log(toLog);
 
 
     if (foundBasicBlock) {

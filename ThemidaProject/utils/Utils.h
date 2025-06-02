@@ -23,8 +23,8 @@ static inline constexpr WORD overflowFlagMask = 0x800;
 
 namespace globals {
     
-    inline static constexpr uintptr_t sectionBase = 0x00000001401FB000;
-    inline static constexpr uint64_t sectionSize = 0x0000000001DE2000;
+    inline   uintptr_t sectionBase = 0x0;
+    inline   uint64_t sectionSize = 0x0;
    
    /* inline static constexpr uintptr_t sectionBase = 0x0000000140009000;
     inline static constexpr uint64_t sectionSize = 0x0000000000064000;*/
