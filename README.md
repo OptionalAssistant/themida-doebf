@@ -29,4 +29,4 @@ The emulator will execute the obfuscated function starting from the specified RV
 
 ## 🚀 Building
 Supported IDE: MSVS2019 and up
-The tool uses zasm framework (x86-64 Assembler based on Zydis), so please setup env var named `ZASM` that points to your local copy of the repo
+The tool uses [zasm framework](https://github.com/zyantific/zasm) (x86-64 Assembler based on Zydis), so please setup env var named `ZASM` that points to your local copy of the repo
