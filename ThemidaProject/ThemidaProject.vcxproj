@@ -113,6 +113,8 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +151,9 @@
     <ClCompile Include="Optimization\SimplifyConstantFolding.cpp" />
     <ClCompile Include="Optimization\SimplifyDeadcodeElimination.cpp" />
     <ClCompile Include="Optimization\SimplifyMbaOperation.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="PE\PE.cpp" />
     <ClCompile Include="Optimization\SimplifyStackOperation.cpp" />
     <ClCompile Include="ThemidaProject.cpp" />
@@ -166,6 +171,7 @@
     <ClInclude Include="Optimization\SimplifyConstantFolding.h" />
     <ClInclude Include="Optimization\SimplifyDeadcodeElimination.h" />
     <ClInclude Include="Optimization\SimplifyMbaOperation.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="PE\PE.h" />
     <ClInclude Include="Optimization\SimplifyStackOperation.h" />
     <ClInclude Include="utils\Logger.h" />
