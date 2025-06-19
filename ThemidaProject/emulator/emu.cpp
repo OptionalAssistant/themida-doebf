@@ -766,6 +766,39 @@ void EmulatorCPU::HandleNot()
 	WriteResult(instruction.getOperand(0), value);
 }
 
+namespace std
+{
+#if __cplusplus < 202300L  // older then C++23
+	template <typename T>
+	constexpr T byteswap(T value)
+	{
+		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Unsupported type size");
+
+		if constexpr (sizeof(T) == 1)
+			return value;
+		else if constexpr (sizeof(T) == 2)
+			return (value >> 8) | (value << 8);
+		else if constexpr (sizeof(T) == 4)
+			return ((value >> 24) & 0x000000FF) |
+			((value >> 8) & 0x0000FF00) |
+			((value << 8) & 0x00FF0000) |
+			((value << 24) & 0xFF000000);
+		else if constexpr (sizeof(T) == 8)
+			return ((value >> 56) & 0x00000000000000FF) |
+			((value >> 40) & 0x000000000000FF00) |
+			((value >> 24) & 0x0000000000FF0000) |
+			((value >> 8) & 0x00000000FF000000) |
+			((value << 8) & 0x000000FF00000000) |
+			((value << 24) & 0x0000FF0000000000) |
+			((value << 40) & 0x00FF000000000000) |
+			((value << 56) & 0xFF00000000000000);
+	}
+#else
+#include <bit>
+	using std::byteswap;
+#endif
+}
+
 void EmulatorCPU::HandleBswap()
 {
 	uintptr_t value = reg_read(instruction.getOperand(0).get<zasm::Reg>());
