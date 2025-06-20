@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\zasm-master\build\_deps\zydis-src\dependencies\zycore\include;D:\zasm-master\build\_deps\zydis-src\include;D:\zasm-master\zasm\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\zasm-master\build\_deps\zydis-build\Debug;D:\zasm-master\build\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ZASM)\build\_deps\zydis-src\dependencies\zycore\include;$(ZASM)\build\_deps\zydis-src\include;$(ZASM)\zasm\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ZASM)\build\_deps\zydis-build\Debug;$(ZASM)\build\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\zasm-master\build\_deps\zydis-src\dependencies\zycore\include;D:\zasm-master\build\_deps\zydis-src\include;D:\zasm-master\zasm\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\zasm-master\build\_deps\zydis-build\Release;D:\zasm-master\build\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ZASM)\build\_deps\zydis-src\dependencies\zycore\include;$(ZASM)\build\_deps\zydis-src\include;$(ZASM)\zasm\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ZASM)\build\_deps\zydis-build\Release;$(ZASM)\build\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

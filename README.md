@@ -17,6 +17,7 @@ Argument	Description
 🆘 Optional:
 Argument	Description
 -help	Show help message
+```
 
 ⚠️ Important
 The -rva argument must point to the first instruction of the obfuscated function inside the obfuscated section.
@@ -25,3 +26,7 @@ All numeric arguments (-rva, -sectionStart, -sectionSize) can be specified as de
 
 📄 Output
 The emulator will execute the obfuscated function starting from the specified RVA and log execution details to the file specified with -o.
+
+## 🚀 Building
+Supported IDE: MSVS2019 and up
+The tool uses [zasm framework](https://github.com/zyantific/zasm) (x86-64 Assembler based on Zydis), so please setup env var named `ZASM` that points to your local copy of the repo
