@@ -1,6 +1,6 @@
 #pragma once
-#include "BaseOptimization.h"
 
+#include "BaseOptimization.h"
 #include "../Instruction/Instruction.h"
 
 class SimplifyConstantFolding : public BaseOptimization 

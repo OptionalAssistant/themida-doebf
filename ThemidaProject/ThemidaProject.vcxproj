@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ZASM)\build\_deps\zydis-src\dependencies\zycore\include;$(ZASM)\build\_deps\zydis-src\include;$(ZASM)\zasm\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ZASM)\build\_deps\zydis-src\dependencies\zycore\include;$(ZASM)\build\_deps\zydis-src\include;$(ZASM)\zasm\include;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(ZASM)\build\_deps\zydis-build\Debug;$(ZASM)\build\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

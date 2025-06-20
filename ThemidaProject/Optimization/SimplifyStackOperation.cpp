@@ -1,7 +1,10 @@
+#include "pch.h"
+
 #include "SimplifyStackOperation.h"
+#include "Helpers/HelpersIterations.h"
 #include "../utils/Utils.h"
-#include "./Helpers/HelpersIterations.h"
 #include "../utils/Logger.h"
+
 
 //Simplify push reg,pop reg -> mov
 static bool PushPopToMove(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
