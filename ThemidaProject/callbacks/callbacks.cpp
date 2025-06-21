@@ -1,14 +1,15 @@
-#include <format>
+#include "pch.h"
 
-
-#include "../emulator/emu.h"
 #include "callbacks.h"
+#include "../emulator/emu.h"
 #include "../utils/Utils.h"
 #include "../utils/Logger.h"
 #include "../Instruction/Instruction.h"
 
-bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail instruction_,
-    void* user_data) {
+bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail& instruction_, void* user_data)
+{
+    //if (countGlobal == 638 || countGlobal == 632)
+    //    printf("");
 
     BasicBlock* foundBasicBlock = FindAddressBasicBlock(globals::bb, address);
 
@@ -31,8 +32,6 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
 
     auto& operands = instruction.getOperands();
 
-
-
     for (int i = 0; i < operands.size(); i++) {
         auto& op = operands[i];
 
@@ -45,7 +44,6 @@ bool traceCallback(EmulatorCPU* cpu, uintptr_t address, zasm::InstructionDetail 
 
         op->setOperandAccess(instruction_.getOperandAccess(i));
     }
-
 
     bb->instructions.push_back(instruction);
 

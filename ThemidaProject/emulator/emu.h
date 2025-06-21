@@ -1,19 +1,11 @@
 #pragma once
-#include <Windows.h>
-#include <array>
-#include <vector>
-#include <functional>
-
-#include <zasm/zasm.hpp>
-
-class EmulatorCPU;
 
 
 class EmulatorCPU
 {
 private:
 	using callbackFunction = bool(*)(EmulatorCPU* cpu_, uintptr_t address, 
-		zasm::InstructionDetail curInstr, void* userData);
+		zasm::InstructionDetail& curInstr, void* userData);
 
 	struct callbackStruct {
 		void* callback_data;

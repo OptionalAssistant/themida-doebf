@@ -1,10 +1,4 @@
 #pragma once
-#include <Windows.h>
-
-#include <string>
-#include <vector>
-#include <variant>
-#include <zasm/zasm.hpp>
 
 #include "../emulator/emu.h"
 
@@ -32,14 +26,13 @@ namespace globals {
 }
 
 
-
-
 enum class ReasonStop {
     JCC,
     UNCOND_TRANSFER,
     EXIT_EXTERNAL,
     VISITED
 };
+
 inline ReasonStop reasonStop;
 
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin);

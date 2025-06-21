@@ -1,6 +1,7 @@
+#include "pch.h"
+
 #include "PE.h"
-
-
+#include "../emulator/emu.h"
 
 IMAGE_DOS_HEADER* PE::GetDosHeader()
 {
@@ -74,7 +75,6 @@ bool PE::MapFile(std::vector<BYTE>& data)
 #define RELOC_FLAG RELOC_FLAG32
 #endif 
 
-#include "../emulator/emu.h"
 bool PE::MapRelocations()
 {
     const uintptr_t LocationDelta = EmulatorCPU::baseImage - GetNtHeader()->OptionalHeader.ImageBase;

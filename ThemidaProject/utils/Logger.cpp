@@ -1,17 +1,20 @@
+#include "pch.h"
+
 #include "Logger.h"
 
 Logger::Logger(const char* path)
+    : m_path(path)
 {
     hFile = CreateFileA(
-        path,                // имя файла
-        GENERIC_WRITE,           // возможность записи
-        0,                       // общий доступ отключен
-        NULL,                    // атрибуты безопасности по умолчанию
-        CREATE_ALWAYS,           // создание нового файла, если файла нет, или перезапись существующего
-        FILE_ATTRIBUTE_NORMAL,   // обычный файл
-        NULL                     // шаблонные файлы не используются
+        path,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
     );
-    // Проверка, удалось ли создать файл
+
     if (hFile == INVALID_HANDLE_VALUE) {
         printf("unable to createfile\n");
         exit(0);
@@ -22,11 +25,11 @@ void Logger::log(const std::string& data)
 {
     DWORD bytesWritten;
     bool writeSuccess = WriteFile(
-        hFile,                  // дескриптор файла
-        data.c_str(),           // буфер данных для записи
-        data.length(),          // количество байтов для записи
-        &bytesWritten,          // количество записанных байтов
-        NULL                    // асинхронная запись не используется
+        hFile,
+        data.c_str(),
+        (DWORD)data.length(),
+        &bytesWritten,
+        NULL
     );
 
     if (!writeSuccess)

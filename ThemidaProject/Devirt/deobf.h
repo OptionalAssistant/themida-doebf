@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../Optimization/Optimizer.h"
 
 class EmulatorCPU;
@@ -16,7 +17,7 @@ private:
 	void transverseBlock(uintptr_t rva, BasicBlock* bb);
 	BasicBlock* handleBBIntersection(uintptr_t address);
 public:
-	deobf(EmulatorCPU* cpu_, PE* pe) : m_cpu(cpu_), m_pe(pe), optimizer(new Optimizer()) {}
+	deobf(EmulatorCPU* cpu_, PE* pe=0) : m_cpu(cpu_), m_pe(pe), optimizer(new Optimizer()) {}
 
 	void run(uintptr_t);
 

@@ -1,14 +1,9 @@
+#include "pch.h"
+
 #include "Utils.h"
-
-
-#include <fstream>
-#include <format>
-#include <unordered_set>
-#include <zasm/formatter/formatter.hpp>
-
+#include "Logger.h"
 #include "../Instruction/Instruction.h"
 #include "../emulator/emu.h"
-#include "Logger.h"
 
 
 bool ReadFile(const std::string& path, std::vector<BYTE>& bin)

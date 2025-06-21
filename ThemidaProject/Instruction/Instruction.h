@@ -1,9 +1,10 @@
 #pragma once
-#include <vector>
-#include <Windows.h>
-#include <zasm/zasm.hpp>
-#include <list>
+
+#include "../emulator/emu.h"
+
 inline uintptr_t bbCount = 0;
+
+
 class BaseOperand {
 private:
 	zasm::Operand operand;

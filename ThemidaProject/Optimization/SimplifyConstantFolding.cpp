@@ -1,11 +1,12 @@
-#include <cmath>
+#include "pch.h"
 
 #include "SimplifyConstantFolding.h"
+#include "Helpers/HelpersIterations.h"
 #include "../Instruction/Instruction.h"
-#include "./Helpers/HelpersIterations.h"
 #include "../utils/Utils.h"
-#include "../emulator/emu.h"
 #include "../utils/Logger.h"
+#include "../emulator/emu.h"
+
 
 //Read constant folding
 static bool foldConstantRead(std::list<Instruction>::iterator it, std::list<Instruction>& instructions) {
