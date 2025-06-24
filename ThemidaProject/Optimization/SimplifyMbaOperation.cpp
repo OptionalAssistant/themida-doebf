@@ -1,5 +1,7 @@
+#include "pch.h"
+
 #include "SimplifyMbaOperation.h"
-#include "./Helpers/HelpersIterations.h"
+#include "Helpers/HelpersIterations.h"
 #include "../utils/Utils.h"
 #include "../utils/Logger.h"
 

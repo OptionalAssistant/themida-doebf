@@ -1,14 +1,9 @@
-#include <Windows.h>
-#include <vector>
-#include <stdexcept>
-
-#include <zasm/formatter/formatter.hpp>
+#include "pch.h"
 
 #include "deobf.h"
 #include "../emulator/emu.h"
 #include "../utils/Utils.h"
 #include "../utils/Logger.h"
-
 #include "../callbacks/callbacks.h"
 
 
@@ -20,7 +15,6 @@ BasicBlock* deobf::handleBBIntersection(uintptr_t address)
 		return nullptr;
 
 	auto& instructions = foundBasicBlock->instructions;
-
 
 	std::list<Instruction>::iterator foundIt;
 	for (auto it = instructions.begin(); it != instructions.end();it++) {
@@ -38,7 +32,6 @@ BasicBlock* deobf::handleBBIntersection(uintptr_t address)
 		throw std::runtime_error("It means that ");
 
 	return foundBasicBlock;
-
 }
 
 void deobf::transverseBlock(uintptr_t rva,BasicBlock* bb)
@@ -51,7 +44,7 @@ void deobf::transverseBlock(uintptr_t rva,BasicBlock* bb)
 	   printf("Visited address 0x%llx\n", m_cpu->getEip());
 	   BasicBlock* labelBB = handleBBIntersection(m_cpu->getEip());
 	   if (!labelBB)
-		   throw std::runtime_error("What ???Fatal error");
+		   throw std::runtime_error("What ??? Fatal error");
 
 	   bb->pass1= labelBB;
 	   return;

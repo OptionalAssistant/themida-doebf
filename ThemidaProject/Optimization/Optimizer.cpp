@@ -1,12 +1,12 @@
+#include "pch.h"
+
 #include "Optimizer.h"
 #include "BaseOptimization.h"
-
 #include "SimplifyConstantFolding.h"
 #include "SimplifyDeadcodeElimination.h"
 #include "SimplifyStackOperation.h"
 #include "SimplifyMbaOperation.h"
 #include "../Instruction/Instruction.h"
-
 #include "../utils/Utils.h"
 
 void Optimizer::runMbaPasses(BasicBlock* bb)

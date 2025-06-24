@@ -1,7 +1,5 @@
 #pragma once
-#include <fstream>
-#include <string>
-#include <Windows.h>
+
 
 class Logger
 {

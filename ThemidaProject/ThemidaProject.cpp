@@ -1,15 +1,12 @@
-﻿#include <iostream>
-#include <map>
+﻿#include "pch.h"
 
-#include  "Utils/Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Logger.h"
 #include "emulator/emu.h"
 #include "PE/PE.h"
-
-#include "Utils/Logger.h"
-#include "./Devirt/deobf.h"
+#include "Devirt/deobf.h"
 
 
-// Функция для парсинга аргументов командной строки
 std::map<std::string, std::string> parseArguments(int argc, char* argv[]) {
     std::map<std::string, std::string> arguments;
 
@@ -36,19 +33,18 @@ void printHelp() {
         << "  -b <path>      Path to binary file (required)\n"
         << "  -o <path>      Path to log file (default: D:\\log.txt)\n"
         << "  -rva <rva>     RVA of obfuscated function (hex or decimal)\n"
-        << "  -sectionStart <address> Start address of section (hex or decimal)\n"
-        << "  -sectionSize <size>     Size of section (hex or decimal)\n"
+        << "  -sectionStart  <address> Start address of section (hex or decimal)\n"
+        << "  -sectionSize   <size>    Size of section (hex or decimal)\n"
         << "  -help          Show this help message\n";
 }
 
 int main(int argc, char* argv[])
 {
-    // Парсинг аргументов командной строки
     auto args = parseArguments(argc, argv);
 
     if (args.count("-help")) {
         printHelp();
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     if(!args.count("-rva")) {

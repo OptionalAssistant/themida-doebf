@@ -1,17 +1,9 @@
-#include <limits>
-#include <bit>
-#include <immintrin.h>
-
-#include <zasm/formatter/formatter.hpp>
+#include "pch.h"
 
 #include "emu.h"
-
-
-
 #include "../Utils/Utils.h"
-#include "../PE/PE.h"
-#include <format>
 #include "../Utils/Logger.h"
+#include "../PE/PE.h"
 
 void EmulatorCPU::PushValue(uintptr_t value)
 {
@@ -794,7 +786,6 @@ namespace std
 			((value << 56) & 0xFF00000000000000);
 	}
 #else
-#include <bit>
 	using std::byteswap;
 #endif
 }
